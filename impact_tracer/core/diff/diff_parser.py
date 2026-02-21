@@ -1,0 +1,1 @@
+"""Diff parser stub."""

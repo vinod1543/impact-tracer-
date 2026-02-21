@@ -1,0 +1,1 @@
+"""CLI report renderer stub."""

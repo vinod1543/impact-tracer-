@@ -1,0 +1,1 @@
+"""Graph query helper stub."""

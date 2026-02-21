@@ -1,0 +1,5 @@
+fan_in: 0.30
+depth: 0.20
+change_type: 0.20
+symbol_type: 0.20
+test_coverage: 0.10

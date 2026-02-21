@@ -1,0 +1,1 @@
+"""Risk configuration loader stub."""

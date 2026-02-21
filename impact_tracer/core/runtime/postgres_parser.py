@@ -1,0 +1,1 @@
+"""PostgreSQL parser stub."""

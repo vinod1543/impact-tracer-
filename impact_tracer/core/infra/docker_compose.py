@@ -1,0 +1,1 @@
+"""Docker Compose parser stub."""

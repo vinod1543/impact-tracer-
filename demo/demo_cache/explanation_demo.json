@@ -1,0 +1,15 @@
+{
+  "summary": "Changing validate() may affect payment processing paths.",
+  "blast_radius": "Routes and workers that call validation may require updates.",
+  "top_risks": [
+    {
+      "symbol": "demo.payments_service.api.process_payment",
+      "reason": "Directly depends on validator signature"
+    }
+  ],
+  "recommended_actions": [
+    "Update direct callers",
+    "Run payment flow tests",
+    "Verify worker compatibility"
+  ]
+}
