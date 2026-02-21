@@ -1,16 +1,16 @@
 # EXECUTION_LOG.md
 
-**Last Updated:** 2026-02-21T19:24:46.8489525+05:30  
+**Last Updated:** 2026-02-21T19:35:31.8191535+05:30  
 **Active Phase:** Phase 4 — UI & Visualization  
 **Overall Status:** ON_TRACK  
-**Hours Elapsed:** 9 / 24  
-**Hours Remaining:** 15
+**Hours Elapsed:** 10 / 24  
+**Hours Remaining:** 14
 
 ## Quick Snapshot
-- Current focus: Pending approval to start Phase 4 (UI & Visualization).
-- Last completed phase: Phase 3 (LLM Integration) — passed.
+- Current focus: Phase 4 output/reporting enhancements.
+- Last completed phase: Phase 3 (LLM Integration) — passed and pushed.
 - Current blocker status: No active blockers (Poetry issue handled by fallback).
-- Latest test health: `33 passed`, `0 failed`.
+- Latest test health: `35 passed`, `0 failed`.
 
 ## Phase Gate Status
 | Phase | Validation Checklist | Status | Gate Passed At |
@@ -24,7 +24,7 @@
 ## In-Progress Tasks
 | Phase | Task ID | Description | Started At | Assignee/Agent |
 |---|---|---|---|---|
-| Phase 4 | 4.1 | Implement CLI reporter (`output/cli_reporter.py`) | 2026-02-21T19:25:00+05:30 | GitHub Copilot |
+| Phase 4 | 4.1 | Continue CLI/report output wiring and formatting | 2026-02-21T19:25:00+05:30 | GitHub Copilot |
 
 ## Completed Tasks
 
@@ -84,6 +84,15 @@
 | 3.8 | Wire LLM step into `orchestrator.analyze(..., enable_llm=True)` | 2026-02-21T19:21:20+05:30 | Yes |
 | 3.9 | Add unit tests for prompt safety, cache mode, and no-key handling | 2026-02-21T19:22:30+05:30 | Yes |
 
+### Phase 4 — UI & Visualization (In progress)
+| Task ID | Description | Completed At | Validated |
+|---|---|---|---|
+| 4.5 | Implement `output/json_reporter.py` while retaining MVP JSON contract | 2026-02-21T19:33:00+05:30 | Yes |
+| 4.6 | Implement detailed simple-language markdown reporter (`output/markdown_reporter.py`) | 2026-02-21T19:32:10+05:30 | Yes |
+| 4.8 | Implement dynamic interactive graph export (`output/graph_visualizer.py`, Pyvis) | 2026-02-21T19:32:40+05:30 | Yes |
+| 4.9 | Wire CLI output modes: text/json/markdown + graph generation in markdown mode | 2026-02-21T19:33:40+05:30 | Yes |
+| 4.10 | Add tests for markdown + graph output behavior | 2026-02-21T19:34:30+05:30 | Yes |
+
 ## Blocked Tasks
 | Task ID | Blocker Description | Impact | Escalated | Fallback Active |
 |---|---|---|---|---|
@@ -107,8 +116,8 @@
 
 ## Test Coverage Summary
 - Full suite executed: `tests/`
-- Result: `33 passed`, `0 failed`
-- New logic validated (Phase 3): prompt builder grounding, async LLM client integration, demo-cache mode, no-key graceful fallback, `enable_llm` orchestration path
+- Result: `35 passed`, `0 failed`
+- New logic validated (Phase 4 progress): markdown report generation, Mermaid graph section, interactive Pyvis graph HTML export, CLI markdown/json routing
 
 ## Compliance Snapshot
 - Plan Compliance Check: Yes
@@ -117,7 +126,7 @@
 - Tests Passing: Yes
 
 ## Next Planned Step
-- Await approval to start Phase 4 (CLI reporter, JSON reporter, REPL/session UX, graph visualizer, MCP wiring).
+- Continue remaining Phase 4 items: richer CLI reporter panel/table output, REPL/session flow, intent parser improvements, and MCP server/tool wiring.
 
 ## Documentation Baseline
 - Added `SCHEMA.md` as the fixed schema reference for implemented Phase 1–2 contracts and Phase 3 bridge.
