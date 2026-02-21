@@ -11,7 +11,10 @@ import argparse
 import json
 from pathlib import Path
 
+from impact_tracer.cli.intent_parser import parse_intent
+from impact_tracer.cli.repl import run_repl
 from impact_tracer.core.orchestrator import analyze
+from impact_tracer.output.cli_reporter import render_cli_report
 from impact_tracer.output.graph_visualizer import generate_interactive_graph
 from impact_tracer.output.json_reporter import render_json_report
 from impact_tracer.output.markdown_reporter import write_markdown_report
@@ -43,14 +46,25 @@ def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
 
+    if args.query is None and args.diff_file is None:
+        run_repl(project_path=args.project)
+        return 0
+
     diff_text = ""
     if args.diff_file:
         diff_text = Path(args.diff_file).read_text(encoding="utf-8")
-    elif args.query:
-        # Temporary behavior: treat raw query as diff content only if it looks like a diff payload.
-        diff_text = args.query if args.query.startswith("--- ") else ""
+    elif args.query and args.query.startswith("--- "):
+        diff_text = args.query
+
+    intent = parse_intent(args.query or "")
+    operation = intent.get("operation", "analyze_diff")
 
     report = analyze(diff_text, args.project, enable_llm=not args.no_llm)
+
+    if operation == "show_graph" and args.format != "markdown":
+        graph_path = generate_interactive_graph(report, output_path=args.graph_output)
+        print(f"Interactive graph written to: {graph_path}")
+        return 0
 
     if args.format == "json":
         payload = render_json_report(report)
@@ -69,13 +83,7 @@ def main() -> int:
         return 0
 
     # text fallback
-    summary = {
-        "overall_risk": report.overall_risk.level.value,
-        "risk_score": report.overall_risk.value,
-        "changed_symbols": len(report.changed_symbols),
-        "affected_symbols": len(report.affected_symbols),
-    }
-    print(json.dumps(summary, indent=2))
+    render_cli_report(report)
     return 0
 
 
