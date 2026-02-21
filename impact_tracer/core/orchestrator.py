@@ -10,6 +10,7 @@ from impact_tracer.core.analyzer.python.call_graph_builder import build_call_edg
 from impact_tracer.core.diff.diff_parser import map_diff_to_symbols, parse_unified_diff
 from impact_tracer.core.graph.graph_builder import build_dependency_graph
 from impact_tracer.core.graph.graph_builder import to_networkx
+from impact_tracer.core.llm.explainer import LLMExplainer
 from impact_tracer.core.propagation.propagator import propagate_changes
 from impact_tracer.core.risk.config import load_risk_weights
 from impact_tracer.core.risk.scorer import aggregate_overall_risk, score_affected_symbols
@@ -33,12 +34,13 @@ def build_graph(project_path: str) -> DependencyGraph:
     return build_dependency_graph(symbol_table, call_graph)
 
 
-def analyze(diff_str: str, project_path: str) -> ImpactReport:
+def analyze(diff_str: str, project_path: str, enable_llm: bool = True) -> ImpactReport:
     """Run end-to-end impact analysis.
 
     Args:
         diff_str: Unified diff string.
         project_path: Project path.
+        enable_llm: Whether to run LLM explanation stage.
 
     Returns:
         ImpactReport: Structured impact report.
@@ -89,7 +91,7 @@ def analyze(diff_str: str, project_path: str) -> ImpactReport:
         changed_symbols=len(changed_symbols),
     )
 
-    return ImpactReport(
+    report = ImpactReport(
         project_path=project_path,
         diff_result=diff_result,
         diff_summary=diff_summary,
@@ -101,3 +103,9 @@ def analyze(diff_str: str, project_path: str) -> ImpactReport:
         explanation=None,
         metadata=metadata,
     )
+
+    if enable_llm:
+        explainer = LLMExplainer()
+        report.explanation = explainer.explain(report)
+
+    return report
