@@ -22,7 +22,13 @@ def predecessors(graph: nx.DiGraph, node_id: str) -> list[str]:
 	"""
 	if node_id not in graph:
 		return []
-	return sorted(graph.predecessors(node_id))
+	results: list[str] = []
+	for source in graph.predecessors(node_id):
+		edge_data = graph.get_edge_data(source, node_id, default={})
+		if edge_data.get("edge_type") == "CONTAINS":
+			continue
+		results.append(source)
+	return sorted(results)
 
 
 def descendants(graph: nx.DiGraph, node_id: str) -> list[str]:
@@ -37,7 +43,12 @@ def descendants(graph: nx.DiGraph, node_id: str) -> list[str]:
 	"""
 	if node_id not in graph:
 		return []
-	return sorted(nx.descendants(graph, node_id))
+	filtered = [
+		node
+		for node in nx.descendants(graph, node_id)
+		if not str(node).startswith("module:")
+	]
+	return sorted(filtered)
 
 
 def ancestors(graph: nx.DiGraph, node_id: str) -> list[str]:
@@ -52,7 +63,12 @@ def ancestors(graph: nx.DiGraph, node_id: str) -> list[str]:
 	"""
 	if node_id not in graph:
 		return []
-	return sorted(nx.ancestors(graph, node_id))
+	filtered = [
+		node
+		for node in nx.ancestors(graph, node_id)
+		if not str(node).startswith("module:")
+	]
+	return sorted(filtered)
 
 
 def shortest_path(graph: nx.DiGraph, source_id: str, target_id: str) -> list[str]:

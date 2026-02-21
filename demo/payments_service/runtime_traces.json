@@ -1,0 +1,104 @@
+{
+  "services": [
+    {"name": "payments-api", "type": "SERVICE", "metadata": {"framework": "fastapi", "replicas": 3}},
+    {"name": "notification-service", "type": "SERVICE", "metadata": {"framework": "fastapi", "replicas": 2}},
+    {"name": "worker", "type": "SERVICE", "metadata": {"framework": "celery", "concurrency": 4}},
+    {"name": "postgres", "type": "TABLE", "metadata": {"version": "16", "engine": "PostgreSQL"}},
+    {"name": "redis", "type": "EXTERNAL", "metadata": {"version": "7", "purpose": "cache+idempotency"}},
+    {"name": "rabbitmq", "type": "QUEUE", "metadata": {"version": "3", "purpose": "async-tasks"}},
+    {"name": "gateway", "type": "SERVICE", "metadata": {"role": "edge-proxy", "engine": "nginx"}}
+  ],
+  "traces": [
+    {
+      "source": "gateway",
+      "target": "payments-api",
+      "operation": "HTTP_PROXY",
+      "call_count": 52400,
+      "avg_latency_ms": 8.3
+    },
+    {
+      "source": "gateway",
+      "target": "notification-service",
+      "operation": "HTTP_PROXY",
+      "call_count": 12100,
+      "avg_latency_ms": 5.1
+    },
+    {
+      "source": "payments-api",
+      "target": "postgres",
+      "operation": "INSERT payments",
+      "call_count": 15200,
+      "avg_latency_ms": 4.2
+    },
+    {
+      "source": "payments-api",
+      "target": "postgres",
+      "operation": "SELECT payments",
+      "call_count": 38900,
+      "avg_latency_ms": 1.8
+    },
+    {
+      "source": "payments-api",
+      "target": "redis",
+      "operation": "CACHE_CHECK idempotency",
+      "call_count": 52400,
+      "avg_latency_ms": 0.3
+    },
+    {
+      "source": "payments-api",
+      "target": "rabbitmq",
+      "operation": "PUBLISH payment.completed",
+      "call_count": 14800,
+      "avg_latency_ms": 1.1
+    },
+    {
+      "source": "payments-api",
+      "target": "rabbitmq",
+      "operation": "PUBLISH payment.risk_alert",
+      "call_count": 320,
+      "avg_latency_ms": 1.0
+    },
+    {
+      "source": "worker",
+      "target": "postgres",
+      "operation": "UPDATE payment_status",
+      "call_count": 14500,
+      "avg_latency_ms": 3.5
+    },
+    {
+      "source": "worker",
+      "target": "rabbitmq",
+      "operation": "CONSUME payment.completed",
+      "call_count": 14800,
+      "avg_latency_ms": 0.5
+    },
+    {
+      "source": "worker",
+      "target": "redis",
+      "operation": "CACHE_INVALIDATE",
+      "call_count": 14500,
+      "avg_latency_ms": 0.2
+    },
+    {
+      "source": "notification-service",
+      "target": "rabbitmq",
+      "operation": "CONSUME notification.send",
+      "call_count": 12100,
+      "avg_latency_ms": 0.4
+    },
+    {
+      "source": "notification-service",
+      "target": "postgres",
+      "operation": "INSERT notification_log",
+      "call_count": 12100,
+      "avg_latency_ms": 2.8
+    },
+    {
+      "source": "payments-api",
+      "target": "notification-service",
+      "operation": "HTTP_CALL send_confirmation",
+      "call_count": 14800,
+      "avg_latency_ms": 15.2
+    }
+  ]
+}

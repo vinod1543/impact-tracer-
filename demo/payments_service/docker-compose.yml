@@ -1,0 +1,86 @@
+version: "3.9"
+
+services:
+  payments-api:
+    build: .
+    image: payments-service:latest
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    environment:
+      DATABASE_URL: "postgresql://app:secret@postgres:5432/payments_db"
+      REDIS_URL: "redis://redis:6379/0"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      NOTIFICATION_SERVICE_URL: "http://notification-service:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+
+  notification-service:
+    image: notification-service:latest
+    ports:
+      - "8001:8001"
+    depends_on:
+      - rabbitmq
+      - postgres
+    environment:
+      DATABASE_URL: "postgresql://app:secret@postgres:5432/payments_db"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      SMTP_HOST: "mailhog"
+
+  worker:
+    build: .
+    image: payments-service:latest
+    command: ["python", "-m", "payments_service.worker"]
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    environment:
+      DATABASE_URL: "postgresql://app:secret@postgres:5432/payments_db"
+      REDIS_URL: "redis://redis:6379/0"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: payments_db
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - payments-api
+      - notification-service
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  pgdata:

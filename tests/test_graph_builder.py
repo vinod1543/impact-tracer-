@@ -45,11 +45,16 @@ def test_graph_builder_creates_module_and_symbol_edges(tmp_path) -> None:
 
     import_edges = [edge for edge in dependency_graph.edges if edge.edge_type == "IMPORT"]
     call_edges = [edge for edge in dependency_graph.edges if edge.edge_type == "CALL"]
+    contains_edges = [edge for edge in dependency_graph.edges if edge.edge_type == "CONTAINS"]
 
     assert len(dependency_graph.nodes) >= 6
     assert len(import_edges) >= 2
     assert ("a.start", "b.helper") in call_graph.edges
     assert len(call_edges) >= 2
+    assert len(contains_edges) >= 3
+
+    edge_keys = {(edge.source, edge.target, edge.edge_type, edge.source_type) for edge in dependency_graph.edges}
+    assert len(edge_keys) == len(dependency_graph.edges)
 
 
 def test_graph_query_functions_return_expected_relationships(tmp_path) -> None:

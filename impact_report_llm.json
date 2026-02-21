@@ -1,0 +1,234 @@
+{
+  "project_path": "demo/payments_service",
+  "diff_result": {
+    "files_changed": [
+      "demo/payments_service/validator.py"
+    ],
+    "hunks": [
+      {
+        "file_path": "demo/payments_service/validator.py",
+        "old_start": 6,
+        "old_len": 7,
+        "new_start": 6,
+        "new_len": 7,
+        "added_lines": [
+          "    def validate(self, payment_data: dict, strict: bool = False) -> bool:"
+        ],
+        "deleted_lines": [
+          "    def validate(self, payment_data: dict) -> bool:"
+        ],
+        "context_lines": [
+          "        \"\"\"Validate a payment payload.\"\"\"",
+          "        return \"amount\" in payment_data and \"currency\" in payment_data"
+        ],
+        "base_change_type": "MODIFICATION",
+        "semantic_change_type": "SIGNATURE_CHANGE"
+      }
+    ],
+    "changed_symbols": [
+      {
+        "symbol_id": "validator.BasePaymentValidator",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+        "line_start": 4,
+        "line_end": 16,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "validator.BasePaymentValidator.validate",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+        "line_start": 7,
+        "line_end": 16,
+        "change_type": "SIGNATURE_CHANGE"
+      }
+    ]
+  },
+  "diff_summary": {
+    "files_changed": 1,
+    "hunks": 1,
+    "changed_symbols": 2
+  },
+  "changed_symbols": [
+    {
+      "symbol_id": "validator.BasePaymentValidator",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+      "line_start": 4,
+      "line_end": 16,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "validator.BasePaymentValidator.validate",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+      "line_start": 7,
+      "line_end": 16,
+      "change_type": "SIGNATURE_CHANGE"
+    }
+  ],
+  "affected_symbols": [
+    {
+      "symbol": {
+        "id": "api.process_payment",
+        "name": "process_payment",
+        "type": "FUNCTION",
+        "module": "api",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\api.py",
+        "line_start": 7,
+        "line_end": 18,
+        "is_public": true,
+        "fan_in": 0,
+        "fan_out": 0,
+        "decorators": [],
+        "signature": "(payload) -> bool"
+      },
+      "propagation_depth": 1,
+      "risk_score": 0.606,
+      "risk_level": "HIGH",
+      "propagation_path": [
+        "validator.BasePaymentValidator",
+        "api.process_payment"
+      ],
+      "change_type": "DIRECT"
+    },
+    {
+      "symbol": {
+        "id": "worker.dry_run_validation",
+        "name": "dry_run_validation",
+        "type": "FUNCTION",
+        "module": "worker",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+        "line_start": 19,
+        "line_end": 29,
+        "is_public": true,
+        "fan_in": 0,
+        "fan_out": 0,
+        "decorators": [],
+        "signature": "(job_payload) -> bool"
+      },
+      "propagation_depth": 1,
+      "risk_score": 0.6,
+      "risk_level": "HIGH",
+      "propagation_path": [
+        "validator.BasePaymentValidator",
+        "worker.dry_run_validation"
+      ],
+      "change_type": "DIRECT"
+    },
+    {
+      "symbol": {
+        "id": "worker.run_worker_job",
+        "name": "run_worker_job",
+        "type": "FUNCTION",
+        "module": "worker",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+        "line_start": 7,
+        "line_end": 16,
+        "is_public": true,
+        "fan_in": 0,
+        "fan_out": 0,
+        "decorators": [],
+        "signature": "(job_payload) -> bool"
+      },
+      "propagation_depth": 2,
+      "risk_score": 0.5667,
+      "risk_level": "MEDIUM",
+      "propagation_path": [
+        "validator.BasePaymentValidator",
+        "api.process_payment",
+        "worker.run_worker_job"
+      ],
+      "change_type": "TRANSITIVE"
+    }
+  ],
+  "propagation_paths": [
+    {
+      "source_symbol_id": "validator.BasePaymentValidator",
+      "target_symbol_id": "api.process_payment",
+      "path": [
+        "validator.BasePaymentValidator",
+        "api.process_payment"
+      ]
+    },
+    {
+      "source_symbol_id": "validator.BasePaymentValidator",
+      "target_symbol_id": "worker.dry_run_validation",
+      "path": [
+        "validator.BasePaymentValidator",
+        "worker.dry_run_validation"
+      ]
+    },
+    {
+      "source_symbol_id": "validator.BasePaymentValidator.validate",
+      "target_symbol_id": "api.process_payment",
+      "path": [
+        "validator.BasePaymentValidator.validate",
+        "api.process_payment"
+      ]
+    },
+    {
+      "source_symbol_id": "validator.BasePaymentValidator.validate",
+      "target_symbol_id": "worker.dry_run_validation",
+      "path": [
+        "validator.BasePaymentValidator.validate",
+        "worker.dry_run_validation"
+      ]
+    },
+    {
+      "source_symbol_id": "validator.BasePaymentValidator",
+      "target_symbol_id": "worker.run_worker_job",
+      "path": [
+        "validator.BasePaymentValidator",
+        "api.process_payment",
+        "worker.run_worker_job"
+      ]
+    },
+    {
+      "source_symbol_id": "validator.BasePaymentValidator.validate",
+      "target_symbol_id": "worker.run_worker_job",
+      "path": [
+        "validator.BasePaymentValidator.validate",
+        "api.process_payment",
+        "worker.run_worker_job"
+      ]
+    }
+  ],
+  "overall_risk": {
+    "value": 0.606,
+    "level": "HIGH",
+    "confidence": "HIGH",
+    "factors": {
+      "max_affected_risk": 0.606,
+      "import_resolution_rate": 1.0,
+      "ast_parse_success_rate": 1.0,
+      "call_resolution_rate": 0.75
+    }
+  },
+  "confidence": "HIGH",
+  "explanation": {
+    "summary": "The changes to the `BasePaymentValidator` class and its `validate` method introduce significant risk due to their impact on multiple components. This could lead to potential failures in payment processing and validation workflows.",
+    "blast_radius": "The affected components include `api.process_payment`, which directly relies on the validator, and `worker.dry_run_validation`, which also utilizes it. Additionally, `worker.run_worker_job` is indirectly affected through its dependency on `api.process_payment`, amplifying the potential for widespread issues.",
+    "top_risks": [
+      {
+        "symbol": "api.process_payment",
+        "reason": "Directly depends on the changed validator."
+      },
+      {
+        "symbol": "worker.dry_run_validation",
+        "reason": "Utilizes the validator for payment validation."
+      },
+      {
+        "symbol": "worker.run_worker_job",
+        "reason": "Indirectly affected through its dependency on payment processing."
+      }
+    ],
+    "recommended_actions": [
+      "Conduct thorough testing of all affected components.",
+      "Review and update documentation for the changed validator methods.",
+      "Implement monitoring for any failures in payment processing workflows."
+    ]
+  },
+  "metadata": {
+    "total_files": 5,
+    "parse_success_rate": 1.0,
+    "import_resolution_rate": 1.0,
+    "call_resolution_rate": 0.75
+  }
+}

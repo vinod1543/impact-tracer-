@@ -1,8 +1,8 @@
 ﻿# Phase 6 Closeout Report
 
-- Generated At: 2026-02-21T20:42:13.5421939+05:30
+- Generated At: 2026-02-21T20:49:54.4019746+05:30
 - Branch: main
-- HEAD: a65428f
+- HEAD: c222a51
 - v0.1.0 Tag Present: True
 
 ## Automated Checks
@@ -12,9 +12,8 @@
 
 ## Git Working Tree
 - Status lines:
-?? FINAL_REHEARSAL_CHECKLIST.md
+?? impact_report.json
 ?? impact_report.md
-?? scripts/
 
 ## Manual Steps Remaining
 1. Run one rehearsal on presentation machine (Task 6.8).

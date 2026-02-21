@@ -18,6 +18,12 @@ class LLMExplanation(BaseModel):
 
 	summary: str
 	blast_radius: str
+	impacted_apis: list[str] = Field(default_factory=list)
+	impacted_modules_or_functions: list[str] = Field(default_factory=list)
+	downstream_dependencies: list[str] = Field(default_factory=list)
+	high_risk_or_uncertain_areas: list[str] = Field(default_factory=list)
+	known_impact_zones: list[str] = Field(default_factory=list)
+	unknown_impact_zones: list[str] = Field(default_factory=list)
 	top_risks: list[dict[str, str]] = Field(default_factory=list)
 	recommended_actions: list[str] = Field(default_factory=list)
 

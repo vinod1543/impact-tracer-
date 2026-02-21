@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     """Runtime settings loaded from environment variables."""
 
     openai_api_key: str | None = None
+    openai_model: str = "gpt-4o-mini"
     log_level: str = "INFO"
     demo_mode: int = 0
 

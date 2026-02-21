@@ -44,6 +44,9 @@ def render_markdown_report(report: ImpactReport, interactive_graph_path: str | N
 
 	explanation_section = "No LLM explanation available for this run."
 	if report.explanation is not None:
+		def _render_list(items: list[str]) -> str:
+			return "\n".join([f"- {item}" for item in items]) if items else "- (none)"
+
 		top_risks = "\n".join(
 			[f"- `{risk['symbol']}`: {risk['reason']}" for risk in report.explanation.top_risks]
 		)
@@ -51,6 +54,12 @@ def render_markdown_report(report: ImpactReport, interactive_graph_path: str | N
 		explanation_section = (
 			f"**Summary**\n\n{report.explanation.summary}\n\n"
 			f"**Blast Radius**\n\n{report.explanation.blast_radius}\n\n"
+			f"**Impacted APIs**\n{_render_list(report.explanation.impacted_apis)}\n\n"
+			f"**Impacted Modules/Functions**\n{_render_list(report.explanation.impacted_modules_or_functions)}\n\n"
+			f"**Downstream Dependencies**\n{_render_list(report.explanation.downstream_dependencies)}\n\n"
+			f"**Known Impact Zones**\n{_render_list(report.explanation.known_impact_zones)}\n\n"
+			f"**Unknown Impact Zones**\n{_render_list(report.explanation.unknown_impact_zones)}\n\n"
+			f"**High-Risk/Uncertain Areas**\n{_render_list(report.explanation.high_risk_or_uncertain_areas)}\n\n"
 			f"**Top Risks**\n{top_risks}\n\n"
 			f"**Recommended Actions**\n{actions}"
 		)

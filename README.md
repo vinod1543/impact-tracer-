@@ -86,17 +86,104 @@ From `.env.example`:
 
 ## MCP Server
 
-Start MCP server:
+Impact Tracer exposes 4 tools via the [Model Context Protocol](https://modelcontextprotocol.io/) (MCP),
+letting code agents (Copilot, OpenCode, Claude, etc.) call them directly.
+
+### Tools provided to agents
+
+| # | Tool | Description |
+|---|------|-------------|
+| 1 | `analyze_change` | Analyze a unified diff against a project → overall risk, changed/affected symbol counts, `report_id` |
+| 2 | `get_impact_report` | Retrieve the full report (symbols, propagation paths, LLM explanation) by `report_id` |
+| 3 | `query_dependency_graph` | Graph summary (node/edge counts) or incoming/outgoing neighbors for a symbol |
+| 4 | `get_risk_score` | Risk score (0-1), level (LOW/MEDIUM/HIGH/CRITICAL), propagation depth for one symbol |
+
+### Run the MCP server
 
 ```powershell
 impact-tracer-mcp
 ```
 
-Exposed tools:
-- `analyze_change`
-- `get_impact_report`
-- `query_dependency_graph`
-- `get_risk_score`
+This runs the server over **stdio** (foreground process), which is what MCP clients expect.
+
+### Connect in VS Code
+
+A workspace config is already provided in `.vscode/mcp.json`.
+
+1. Open Command Palette → **MCP: List Servers** → start **impactTracer**.
+2. In Chat, enable tools from the **impactTracer** server in the tool picker.
+3. Prompt example:
+
+```text
+Analyze the blast radius of renaming validate() to validate_payment() in validator.py. Use impactTracer.
+```
+
+If you need to set it up manually, add to `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "impactTracer": {
+      "type": "stdio",
+      "command": "${workspaceFolder}/.venv/Scripts/impact-tracer-mcp",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "OPENAI_API_KEY": "${env:OPENAI_API_KEY}",
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}
+```
+
+> **Tip:** If tools don't appear, run **MCP: Reset Cached Tools**.
+
+### Connect in OpenCode
+
+A config is already provided in `opencode.json` (project root).
+
+Verify and debug:
+
+```bash
+opencode mcp list
+opencode mcp debug impact_tracer_mcp
+```
+
+Prompt example:
+
+```text
+What is the blast radius of changing the payment validation logic? Use impact_tracer_mcp.
+```
+
+Manual `opencode.json` if needed:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "impact_tracer": {
+      "type": "local",
+      "command": ["./.venv/Scripts/python.exe", "-m", "impact_tracer.mcp.server"],
+      "enabled": true,
+      "timeout": 30000,
+      "environment": {
+        "OPENAI_API_KEY": "{env:OPENAI_API_KEY}",
+        "LOG_LEVEL": "INFO"
+      }
+    },
+    "impact_tracer_mcp": {
+      "type": "local",
+      "command": ["./.venv/Scripts/impact-tracer-mcp"],
+      "enabled": true,
+      "timeout": 30000,
+      "environment": {
+        "OPENAI_API_KEY": "{env:OPENAI_API_KEY}",
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}
+```
 
 ## Testing
 

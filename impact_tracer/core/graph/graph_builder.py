@@ -36,6 +36,14 @@ def build_dependency_graph(
 	"""
 	graph_nodes: dict[str, GraphNode] = {}
 	graph_edges: list[GraphEdge] = []
+	edge_keys: set[tuple[str, str, str, EdgeSource]] = set()
+
+	def add_edge(edge: GraphEdge) -> None:
+		key = (edge.source, edge.target, edge.edge_type, edge.source_type)
+		if key in edge_keys:
+			return
+		edge_keys.add(key)
+		graph_edges.append(edge)
 
 	for file_table in symbol_table.files:
 		module_node_id = f"module:{file_table.module}"
@@ -58,6 +66,15 @@ def build_dependency_graph(
 					"line_end": symbol.line_end,
 				},
 			)
+			add_edge(
+				GraphEdge(
+					source=module_node_id,
+					target=symbol.id,
+					edge_type="CONTAINS",
+					source_type=EdgeSource.AST,
+					confidence=1.0,
+				)
+			)
 
 		resolution = resolve_imports(file_table.module, file_table.imports)
 		for target in resolution.import_map.values():
@@ -67,7 +84,7 @@ def build_dependency_graph(
 				imported_node_id,
 				GraphNode(id=imported_node_id, label=imported_module, layer=NodeLayer.MODULE),
 			)
-			graph_edges.append(
+			add_edge(
 				GraphEdge(
 					source=module_node_id,
 					target=imported_node_id,
@@ -79,7 +96,7 @@ def build_dependency_graph(
 
 	if call_graph is not None:
 		for caller_id, callee_id in call_graph.edges:
-			graph_edges.append(
+			add_edge(
 				GraphEdge(
 					source=caller_id,
 					target=callee_id,
@@ -109,7 +126,7 @@ def build_dependency_graph(
 			if runtime_edge.latency_ms is not None:
 				edge_metadata["latency_ms"] = runtime_edge.latency_ms
 
-			graph_edges.append(
+			add_edge(
 				GraphEdge(
 					source=_external_node_id(runtime_edge.source, "runtime"),
 					target=_external_node_id(runtime_edge.target, "runtime"),
@@ -136,7 +153,7 @@ def build_dependency_graph(
 			)
 
 		for infra_edge in infra_topology.edges:
-			graph_edges.append(
+			add_edge(
 				GraphEdge(
 					source=_external_node_id(infra_edge.source, "infra"),
 					target=_external_node_id(infra_edge.target, "infra"),

@@ -1,0 +1,8 @@
+--- a/demo/payments_service/api.py
++++ b/demo/payments_service/api.py
+@@ -49,7 +49,7 @@ def create_payment(request: PaymentRequest, api_key: str) -> PaymentResponse:
+-def create_payment(request: PaymentRequest, api_key: str) -> PaymentResponse:
++def create_payment(request: PaymentRequest, api_key: str, dry_run: bool = False) -> PaymentResponse:
+     """Full payment creation flow.
+ 
+     Steps:

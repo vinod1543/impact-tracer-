@@ -8,8 +8,10 @@ from impact_tracer.cli.main import main
 
 
 def test_cli_returns_error_when_analyze_without_diff(monkeypatch) -> None:
-    """CLI should fail fast for analyze intent when no diff source is provided."""
+    """CLI should fail fast for analyze intent when no diff source is provided and git has no changes."""
     monkeypatch.setattr("sys.argv", ["impact-tracer", "what breaks if i change validate", "--project", "demo/payments_service"])
+    # Ensure auto-detection returns nothing so the error path triggers
+    monkeypatch.setattr("impact_tracer.cli.main.discover_git_changes", lambda _: [])
     exit_code = main()
     assert exit_code == 2
 

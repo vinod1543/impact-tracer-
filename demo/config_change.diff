@@ -1,0 +1,10 @@
+--- a/demo/payments_service/config.py
++++ b/demo/payments_service/config.py
+@@ -29,7 +29,8 @@ class PaymentConfig:
+     max_payment_amount: float = 50000.00
+     min_payment_amount: float = 0.50
+-    supported_currencies: list = field(default_factory=lambda: ["USD", "EUR", "GBP"])
++    supported_currencies: list = field(default_factory=lambda: ["USD", "EUR", "GBP", "JPY", "AUD"])
+     risk_threshold: float = 0.75
++    risk_threshold_high: float = 0.90
+     retry_max_attempts: int = 3

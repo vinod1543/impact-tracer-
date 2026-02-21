@@ -8,6 +8,7 @@ Implements: PRD data flow contract baseline.
 from impact_tracer.core.analyzer.python.ast_parser import PythonAstParser
 from impact_tracer.core.analyzer.python.call_graph_builder import build_call_edges
 from impact_tracer.core.diff.diff_parser import map_diff_to_symbols, parse_unified_diff
+from impact_tracer.core.discovery import discover_infra, discover_runtime
 from impact_tracer.core.graph.graph_builder import build_dependency_graph
 from impact_tracer.core.graph.graph_builder import to_networkx
 from impact_tracer.core.llm.explainer import LLMExplainer
@@ -19,6 +20,19 @@ from impact_tracer.models.graph import DependencyGraph
 from impact_tracer.models.infra import InfraTopology
 from impact_tracer.models.report import AnalysisMetadata, DiffSummary, ImpactReport
 from impact_tracer.models.runtime import RuntimeTraceGraph
+
+
+def _resolve_layers(
+    project_path: str,
+    infra_topology: InfraTopology | None,
+    runtime_graph: RuntimeTraceGraph | None,
+) -> tuple[InfraTopology | None, RuntimeTraceGraph | None]:
+    """Auto-discover infra/runtime if not explicitly provided."""
+    if infra_topology is None:
+        infra_topology = discover_infra(project_path)
+    if runtime_graph is None:
+        runtime_graph = discover_runtime(project_path)
+    return infra_topology, runtime_graph
 
 
 def build_graph(
@@ -39,6 +53,7 @@ def build_graph(
     parser = PythonAstParser()
     symbol_table = parser.parse_project(project_path)
     call_graph = build_call_edges(symbol_table)
+    infra_topology, runtime_graph = _resolve_layers(project_path, infra_topology, runtime_graph)
     return build_dependency_graph(
         symbol_table,
         call_graph,
@@ -69,6 +84,7 @@ def analyze(
     parser = PythonAstParser()
     symbol_table = parser.parse_project(project_path)
     call_graph = build_call_edges(symbol_table)
+    infra_topology, runtime_graph = _resolve_layers(project_path, infra_topology, runtime_graph)
     dependency_graph = build_dependency_graph(
         symbol_table,
         call_graph,

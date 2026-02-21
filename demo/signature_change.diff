@@ -1,6 +1,6 @@
 --- a/demo/payments_service/validator.py
 +++ b/demo/payments_service/validator.py
-@@ -6,7 +6,7 @@ class BasePaymentValidator:
+@@ -22,7 +22,7 @@ class BasePaymentValidator:
 -    def validate(self, payment_data: dict) -> bool:
 +    def validate(self, payment_data: dict, strict: bool = False) -> bool:
          """Validate a payment payload."""

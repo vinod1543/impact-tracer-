@@ -58,9 +58,24 @@ def render_cli_report(report: ImpactReport, console: Console | None = None) -> N
 	console.print(affected_table)
 
 	if report.explanation is not None:
+		def _lines(items: list[str]) -> str:
+			return "\n".join([f"- {item}" for item in items]) if items else "- (none)"
+
 		explanation = (
 			f"Summary: {report.explanation.summary}\n\n"
 			f"Blast Radius: {report.explanation.blast_radius}\n\n"
+			"Impacted APIs:\n"
+			f"{_lines(report.explanation.impacted_apis)}\n\n"
+			"Impacted Modules/Functions:\n"
+			f"{_lines(report.explanation.impacted_modules_or_functions)}\n\n"
+			"Downstream Dependencies:\n"
+			f"{_lines(report.explanation.downstream_dependencies)}\n\n"
+			"Known Impact Zones:\n"
+			f"{_lines(report.explanation.known_impact_zones)}\n\n"
+			"Unknown Impact Zones:\n"
+			f"{_lines(report.explanation.unknown_impact_zones)}\n\n"
+			"High-Risk/Uncertain Areas:\n"
+			f"{_lines(report.explanation.high_risk_or_uncertain_areas)}\n\n"
 			"Recommended Actions:\n"
 			+ "\n".join([f"- {action}" for action in report.explanation.recommended_actions])
 		)

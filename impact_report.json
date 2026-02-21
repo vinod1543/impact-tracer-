@@ -1,0 +1,1255 @@
+{
+  "project_path": "demo/payments_service",
+  "diff_result": {
+    "files_changed": [
+      "demo/payments_service/__init__.py",
+      "demo/payments_service/api.py",
+      "demo/payments_service/utils.py",
+      "demo/payments_service/validator.py",
+      "demo/payments_service/worker.py"
+    ],
+    "hunks": [
+      {
+        "file_path": "demo/payments_service/__init__.py",
+        "old_start": 1,
+        "old_len": 1,
+        "new_start": 1,
+        "new_len": 16,
+        "added_lines": [
+          "\"\"\"Demo payments service package.",
+          "",
+          "A realistic multi-module payment processing service used to demonstrate",
+          "Impact Tracer's static analysis, dependency graphing, and risk scoring.",
+          "",
+          "Modules:",
+          "    models      - Data models (PaymentRequest, PaymentResponse, etc.)",
+          "    config      - Service configuration and feature flags",
+          "    validator   - Payment validation logic",
+          "    utils       - Shared utilities (formatting, hashing, retry)",
+          "    repository  - Database/persistence layer",
+          "    api         - HTTP API handlers",
+          "    worker      - Background job processing",
+          "    middleware  - Request middleware (auth, rate limiting, logging)",
+          "    notification- Downstream notification service",
+          "\"\"\""
+        ],
+        "deleted_lines": [
+          "\"\"\"Demo payments service package.\"\"\""
+        ],
+        "context_lines": [
+          "diff --git a/demo/payments_service/api.py b/demo/payments_service/api.py",
+          "index 16ef487..0d9c446 100644",
+          "--- a/demo/payments_service/api.py"
+        ],
+        "base_change_type": "MODIFICATION",
+        "semantic_change_type": "BODY_CHANGE"
+      },
+      {
+        "file_path": "demo/payments_service/api.py",
+        "old_start": 1,
+        "old_len": 11,
+        "new_start": 1,
+        "new_len": 31,
+        "added_lines": [
+          "\"\"\"API module for demo payments service.",
+          "HTTP-facing API handlers for payment operations.",
+          "Orchestrates middleware, validation, persistence, and notifications.",
+          "\"\"\"",
+          "",
+          "from demo.payments_service.config import PaymentConfig, load_config",
+          "from demo.payments_service.middleware import AuthMiddleware, RateLimiter, RequestLogger",
+          "from demo.payments_service.models import PaymentRequest, PaymentResponse, PaymentStatus, RefundRequest",
+          "from demo.payments_service.notification import NotificationService",
+          "from demo.payments_service.repository import PaymentRepository",
+          "from demo.payments_service.validator import PaymentRequestValidator, RefundValidator",
+          "",
+          "",
+          "# Module-level singletons (simulating dependency injection)",
+          "_config = load_config()",
+          "_auth = AuthMiddleware()",
+          "_rate_limiter = RateLimiter()",
+          "_logger = RequestLogger()",
+          "_repo = PaymentRepository()",
+          "_validator = PaymentRequestValidator(config=_config)",
+          "_refund_validator = RefundValidator(config=_config)",
+          "_notifications = NotificationService(config=_config)",
+          "    \"\"\"Process payment payload via validator (legacy simple API)."
+        ],
+        "deleted_lines": [
+          "\"\"\"API module for demo payments service.\"\"\"",
+          "from demo.payments_service.validator import BasePaymentValidator",
+          "    \"\"\"Process payment payload via validator."
+        ],
+        "context_lines": [
+          "",
+          "from demo.payments_service.utils import format_amount",
+          "",
+          "",
+          "def process_payment(payload: dict) -> bool:",
+          "",
+          "    Args:",
+          "        payload: Payment payload."
+        ],
+        "base_change_type": "MODIFICATION",
+        "semantic_change_type": "BODY_CHANGE"
+      },
+      {
+        "file_path": "demo/payments_service/api.py",
+        "old_start": 14,
+        "old_len": 5,
+        "new_start": 34,
+        "new_len": 139,
+        "added_lines": [
+          "    validator = PaymentRequestValidator()",
+          "",
+          "",
+          "def create_payment(request: PaymentRequest, api_key: str) -> PaymentResponse:",
+          "    \"\"\"Full payment creation flow.",
+          "",
+          "    Steps:",
+          "        1. Authenticate API key",
+          "        2. Rate limit check",
+          "        3. Log request",
+          "        4. Validate request",
+          "        5. Check idempotency",
+          "        6. Persist payment",
+          "        7. Send notifications",
+          "",
+          "    Args:",
+          "        request: Structured payment request.",
+          "        api_key: Client API key.",
+          "",
+          "    Returns:",
+          "        PaymentResponse: Payment result.",
+          "",
+          "    Raises:",
+          "        PermissionError: If authentication fails.",
+          "        ValueError: If validation fails.",
+          "        RuntimeError: If rate limited.",
+          "    \"\"\"",
+          "    # 1. Auth",
+          "    if not _auth.authenticate(api_key):",
+          "        raise PermissionError(\"Invalid API key\")",
+          "",
+          "    # 2. Rate limit",
+          "    merchant_id = _auth.extract_merchant_from_key(api_key)",
+          "    if not _rate_limiter.is_allowed(merchant_id):",
+          "        raise RuntimeError(\"Rate limit exceeded\")",
+          "",
+          "    # 3. Log",
+          "    _logger.log_request(\"/api/payments\", merchant_id, request.customer_email)",
+          "",
+          "    # 4. Validate",
+          "    errors = _validator.validate_request(request)",
+          "    if errors:",
+          "        raise ValueError(f\"Validation failed: {'; '.join(errors)}\")",
+          "",
+          "    # 5. Idempotency",
+          "    if request.idempotency_key:",
+          "        existing = _repo.check_idempotency(request.idempotency_key)",
+          "        if existing:",
+          "            return existing",
+          "",
+          "    # 6. Persist",
+          "    risk_flag = _assess_risk(request)",
+          "    status = PaymentStatus.COMPLETED if not risk_flag else PaymentStatus.PENDING",
+          "    response = _repo.save_payment(request, status, risk_flag)",
+          "",
+          "    # 7. Notify",
+          "    if status == PaymentStatus.COMPLETED:",
+          "        _notifications.send_payment_confirmation(response, request.customer_email)",
+          "    if risk_flag:",
+          "        _notifications.send_risk_alert(response, request.merchant_id)",
+          "",
+          "    return response",
+          "",
+          "",
+          "def get_payment(payment_id: str, api_key: str) -> PaymentResponse:",
+          "    \"\"\"Retrieve payment by ID.",
+          "",
+          "    Args:",
+          "        payment_id: Payment identifier.",
+          "        api_key: Client API key.",
+          "",
+          "    Returns:",
+          "        PaymentResponse: Payment data.",
+          "",
+          "    Raises:",
+          "        PermissionError: If auth fails.",
+          "        KeyError: If payment not found.",
+          "    \"\"\"",
+          "    if not _auth.authenticate(api_key):",
+          "        raise PermissionError(\"Invalid API key\")",
+          "",
+          "    payment = _repo.get_payment(payment_id)",
+          "    if payment is None:",
+          "        raise KeyError(f\"Payment not found: {payment_id}\")",
+          "    return payment",
+          "",
+          "",
+          "def process_refund(refund: RefundRequest, api_key: str) -> PaymentResponse:",
+          "    \"\"\"Process a refund request.",
+          "",
+          "    Args:",
+          "        refund: Refund request.",
+          "        api_key: Client API key.",
+          "",
+          "    Returns:",
+          "        PaymentResponse: Updated payment response.",
+          "",
+          "    Raises:",
+          "        PermissionError: If auth fails.",
+          "        KeyError: If original payment not found.",
+          "        ValueError: If refund validation fails.",
+          "    \"\"\"",
+          "    if not _auth.authenticate(api_key):",
+          "        raise PermissionError(\"Invalid API key\")",
+          "",
+          "    original = _repo.get_payment(refund.payment_id)",
+          "    if original is None:",
+          "        raise KeyError(f\"Payment not found: {refund.payment_id}\")",
+          "",
+          "    original_amount = float(original.amount_formatted.replace(\"$\", \"\").replace(\",\", \"\"))",
+          "    errors = _refund_validator.validate_refund(refund, original_amount)",
+          "    if errors:",
+          "        raise ValueError(f\"Refund validation failed: {'; '.join(errors)}\")",
+          "",
+          "    _repo.update_payment_status(refund.payment_id, PaymentStatus.REFUNDED)",
+          "",
+          "    refund_amount = refund.partial_amount or original_amount",
+          "    _notifications.send_refund_notification(refund.payment_id, refund_amount, \"customer@example.com\")",
+          "",
+          "    return _repo.get_payment(refund.payment_id)",
+          "",
+          "",
+          "def _assess_risk(request: PaymentRequest) -> bool:",
+          "    \"\"\"Simple risk assessment based on amount threshold.",
+          "",
+          "    Args:",
+          "        request: Payment request.",
+          "",
+          "    Returns:",
+          "        bool: True if payment is flagged as risky.",
+          "    \"\"\"",
+          "    if not _config.enable_fraud_check:",
+          "        return False",
+          "    risk_score = request.amount / _config.max_payment_amount",
+          "    return risk_score > _config.risk_threshold"
+        ],
+        "deleted_lines": [
+          "    validator = BasePaymentValidator()"
+        ],
+        "context_lines": [
+          "        bool: Validation status.",
+          "    \"\"\"",
+          "    _ = format_amount(float(payload.get(\"amount\", 0)))",
+          "    return validator.validate(payload)",
+          "diff --git a/demo/payments_service/utils.py b/demo/payments_service/utils.py",
+          "index 405eddc..35fc9fc 100644",
+          "--- a/demo/payments_service/utils.py"
+        ],
+        "base_change_type": "MODIFICATION",
+        "semantic_change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "file_path": "demo/payments_service/utils.py",
+        "old_start": 1,
+        "old_len": 4,
+        "new_start": 1,
+        "new_len": 17,
+        "added_lines": [
+          "\"\"\"Utility module for demo payments service.",
+          "",
+          "Shared utilities used across API, worker, repository, and notification layers.",
+          "Changes here have wide blast radius.",
+          "\"\"\"",
+          "",
+          "import hashlib",
+          "import time",
+          "import uuid",
+          "from typing import Callable, TypeVar",
+          "",
+          "from demo.payments_service.config import PaymentConfig, load_config",
+          "",
+          "T = TypeVar(\"T\")"
+        ],
+        "deleted_lines": [
+          "\"\"\"Utility module for demo payments service.\"\"\""
+        ],
+        "context_lines": [
+          "",
+          "",
+          "def format_amount(amount: float) -> str:"
+        ],
+        "base_change_type": "MODIFICATION",
+        "semantic_change_type": "BODY_CHANGE"
+      },
+      {
+        "file_path": "demo/payments_service/utils.py",
+        "old_start": 11,
+        "old_len": 3,
+        "new_start": 24,
+        "new_len": 79,
+        "added_lines": [
+          "",
+          "",
+          "def generate_payment_id() -> str:",
+          "    \"\"\"Generate a unique payment identifier.",
+          "",
+          "    Returns:",
+          "        str: UUID-based payment id.",
+          "    \"\"\"",
+          "    return f\"pay_{uuid.uuid4().hex[:16]}\"",
+          "",
+          "",
+          "def generate_transaction_id() -> str:",
+          "    \"\"\"Generate a unique transaction identifier.",
+          "",
+          "    Returns:",
+          "        str: UUID-based transaction id.",
+          "    \"\"\"",
+          "    return f\"txn_{uuid.uuid4().hex[:16]}\"",
+          "",
+          "",
+          "def compute_audit_hash(payment_id: str, amount: float, currency: str) -> str:",
+          "    \"\"\"Compute integrity hash for audit trail.",
+          "",
+          "    Args:",
+          "        payment_id: Payment identifier.",
+          "        amount: Payment amount.",
+          "        currency: Currency code.",
+          "",
+          "    Returns:",
+          "        str: SHA-256 hex digest.",
+          "    \"\"\"",
+          "    data = f\"{payment_id}:{amount}:{currency}\"",
+          "    return hashlib.sha256(data.encode()).hexdigest()",
+          "",
+          "",
+          "def retry_with_backoff(",
+          "    func: Callable[[], T],",
+          "    config: PaymentConfig | None = None,",
+          ") -> T:",
+          "    \"\"\"Execute function with retry and exponential backoff.",
+          "",
+          "    Args:",
+          "        func: Callable to execute.",
+          "        config: Configuration for retry limits.",
+          "",
+          "    Returns:",
+          "        T: Function result on success.",
+          "",
+          "    Raises:",
+          "        Exception: Last exception after all retries exhausted.",
+          "    \"\"\"",
+          "    cfg = config or load_config()",
+          "    last_error: Exception | None = None",
+          "    for attempt in range(cfg.retry_max_attempts):",
+          "        try:",
+          "            return func()",
+          "        except Exception as e:",
+          "            last_error = e",
+          "            time.sleep(cfg.retry_backoff_seconds * (2 ** attempt))",
+          "    raise last_error  # type: ignore[misc]",
+          "",
+          "",
+          "def mask_email(email: str) -> str:",
+          "    \"\"\"Mask an email address for logging (privacy).",
+          "",
+          "    Args:",
+          "        email: Full email address.",
+          "",
+          "    Returns:",
+          "        str: Masked email string.",
+          "    \"\"\"",
+          "    if \"@\" not in email:",
+          "        return \"***\"",
+          "    local, domain = email.rsplit(\"@\", 1)",
+          "    masked_local = local[0] + \"***\" if local else \"***\"",
+          "    return f\"{masked_local}@{domain}\""
+        ],
+        "deleted_lines": [],
+        "context_lines": [
+          "        str: Formatted amount string.",
+          "    \"\"\"",
+          "    return f\"${amount:.2f}\"",
+          "diff --git a/demo/payments_service/validator.py b/demo/payments_service/validator.py",
+          "index b9c3ddf..9e5cd57 100644",
+          "--- a/demo/payments_service/validator.py"
+        ],
+        "base_change_type": "ADDITION",
+        "semantic_change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "file_path": "demo/payments_service/validator.py",
+        "old_start": 1,
+        "old_len": 8,
+        "new_start": 1,
+        "new_len": 23,
+        "added_lines": [
+          "\"\"\"Validator module for demo payment service.",
+          "",
+          "Contains validation logic used by both API and worker layers.",
+          "Changes here impact every code path that processes payments.",
+          "\"\"\"",
+          "",
+          "from demo.payments_service.config import PaymentConfig, load_config",
+          "from demo.payments_service.models import PaymentRequest, RefundRequest",
+          "    \"\"\"Validates payment payloads against business rules.\"\"\"",
+          "",
+          "    def __init__(self, config: PaymentConfig | None = None) -> None:",
+          "        \"\"\"Initialize validator with configuration.",
+          "",
+          "        Args:",
+          "            config: Payment configuration. Defaults to global config.",
+          "        \"\"\"",
+          "        self.config = config or load_config()"
+        ],
+        "deleted_lines": [
+          "\"\"\"Validator module for demo payment service.\"\"\"",
+          "    \"\"\"Validates payment payloads.\"\"\""
+        ],
+        "context_lines": [
+          "",
+          "",
+          "class BasePaymentValidator:",
+          "",
+          "    def validate(self, payment_data: dict) -> bool:",
+          "        \"\"\"Validate a payment payload."
+        ],
+        "base_change_type": "MODIFICATION",
+        "semantic_change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "file_path": "demo/payments_service/validator.py",
+        "old_start": 14,
+        "old_len": 3,
+        "new_start": 29,
+        "new_len": 78,
+        "added_lines": [
+          "",
+          "    def validate_amount(self, amount: float) -> bool:",
+          "        \"\"\"Validate payment amount is within allowed range.",
+          "",
+          "        Args:",
+          "            amount: Payment amount.",
+          "",
+          "        Returns:",
+          "            bool: True if amount is within config limits.",
+          "        \"\"\"",
+          "        return self.config.min_payment_amount <= amount <= self.config.max_payment_amount",
+          "",
+          "    def validate_currency(self, currency: str) -> bool:",
+          "        \"\"\"Validate currency is supported.",
+          "",
+          "        Args:",
+          "            currency: Currency code.",
+          "",
+          "        Returns:",
+          "            bool: True if currency is in supported list.",
+          "        \"\"\"",
+          "        return currency in self.config.supported_currencies",
+          "",
+          "",
+          "class PaymentRequestValidator(BasePaymentValidator):",
+          "    \"\"\"Full validation for structured PaymentRequest objects.\"\"\"",
+          "",
+          "    def validate_request(self, request: PaymentRequest) -> list[str]:",
+          "        \"\"\"Validate a PaymentRequest and return list of errors.",
+          "",
+          "        Args:",
+          "            request: Structured payment request.",
+          "",
+          "        Returns:",
+          "            list[str]: List of validation error messages. Empty if valid.",
+          "        \"\"\"",
+          "        errors = []",
+          "        if not self.validate_amount(request.amount):",
+          "            errors.append(",
+          "                f\"Amount {request.amount} outside range \"",
+          "                f\"[{self.config.min_payment_amount}, {self.config.max_payment_amount}]\"",
+          "            )",
+          "        if not self.validate_currency(request.currency):",
+          "            errors.append(f\"Unsupported currency: {request.currency}\")",
+          "        if not request.merchant_id:",
+          "            errors.append(\"Missing merchant_id\")",
+          "        if not request.customer_email or \"@\" not in request.customer_email:",
+          "            errors.append(\"Invalid customer_email\")",
+          "        return errors",
+          "",
+          "",
+          "class RefundValidator(BasePaymentValidator):",
+          "    \"\"\"Validates refund requests.\"\"\"",
+          "",
+          "    def validate_refund(self, refund: RefundRequest, original_amount: float) -> list[str]:",
+          "        \"\"\"Validate a refund request against the original payment.",
+          "",
+          "        Args:",
+          "            refund: Refund request payload.",
+          "            original_amount: Original payment amount.",
+          "",
+          "        Returns:",
+          "            list[str]: List of validation errors.",
+          "        \"\"\"",
+          "        errors = []",
+          "        if not refund.payment_id:",
+          "            errors.append(\"Missing payment_id for refund\")",
+          "        if not refund.reason:",
+          "            errors.append(\"Refund reason is required\")",
+          "        if refund.partial_amount is not None:",
+          "            if refund.partial_amount <= 0:",
+          "                errors.append(\"Partial refund amount must be positive\")",
+          "            if refund.partial_amount > original_amount:",
+          "                errors.append(\"Partial refund exceeds original amount\")",
+          "        return errors"
+        ],
+        "deleted_lines": [],
+        "context_lines": [
+          "            bool: True when required fields are present.",
+          "        \"\"\"",
+          "        return \"amount\" in payment_data and \"currency\" in payment_data",
+          "diff --git a/demo/payments_service/worker.py b/demo/payments_service/worker.py",
+          "index 16f2f40..7961d34 100644",
+          "--- a/demo/payments_service/worker.py"
+        ],
+        "base_change_type": "ADDITION",
+        "semantic_change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "file_path": "demo/payments_service/worker.py",
+        "old_start": 1,
+        "old_len": 7,
+        "new_start": 1,
+        "new_len": 16,
+        "added_lines": [
+          "\"\"\"Background worker module for demo payments service.",
+          "Handles async job processing: batch validation, retry, and notifications.",
+          "Depends on API, validator, repository, and notification layers.",
+          "\"\"\"",
+          "",
+          "from demo.payments_service.api import process_payment, create_payment, _repo, _notifications",
+          "from demo.payments_service.config import load_config, PaymentConfig",
+          "from demo.payments_service.models import PaymentRequest, PaymentStatus",
+          "from demo.payments_service.notification import NotificationService",
+          "from demo.payments_service.repository import PaymentRepository",
+          "from demo.payments_service.utils import retry_with_backoff",
+          "from demo.payments_service.validator import BasePaymentValidator, PaymentRequestValidator"
+        ],
+        "deleted_lines": [
+          "\"\"\"Background worker module for demo payments service.\"\"\"",
+          "from demo.payments_service.api import process_payment",
+          "from demo.payments_service.validator import BasePaymentValidator"
+        ],
+        "context_lines": [
+          "",
+          "",
+          "",
+          "def run_worker_job(job_payload: dict) -> bool:"
+        ],
+        "base_change_type": "MODIFICATION",
+        "semantic_change_type": "BODY_CHANGE"
+      },
+      {
+        "file_path": "demo/payments_service/worker.py",
+        "old_start": 27,
+        "old_len": 3,
+        "new_start": 36,
+        "new_len": 90,
+        "added_lines": [
+          "",
+          "",
+          "def batch_validate_payments(payloads: list[dict]) -> dict:",
+          "    \"\"\"Validate a batch of payment payloads.",
+          "",
+          "    Args:",
+          "        payloads: List of payment payloads.",
+          "",
+          "    Returns:",
+          "        dict: Results with counts of valid/invalid and per-payload errors.",
+          "    \"\"\"",
+          "    validator = PaymentRequestValidator()",
+          "    results = {\"valid\": 0, \"invalid\": 0, \"errors\": []}",
+          "    for i, payload in enumerate(payloads):",
+          "        request = PaymentRequest(",
+          "            amount=payload.get(\"amount\", 0),",
+          "            currency=payload.get(\"currency\", \"\"),",
+          "            merchant_id=payload.get(\"merchant_id\", \"\"),",
+          "            customer_email=payload.get(\"customer_email\", \"\"),",
+          "        )",
+          "        errors = validator.validate_request(request)",
+          "        if errors:",
+          "            results[\"invalid\"] += 1",
+          "            results[\"errors\"].append({\"index\": i, \"errors\": errors})",
+          "        else:",
+          "            results[\"valid\"] += 1",
+          "    return results",
+          "",
+          "",
+          "def process_payment_with_retry(request: PaymentRequest, api_key: str) -> dict:",
+          "    \"\"\"Process a payment with automatic retry on failure.",
+          "",
+          "    Args:",
+          "        request: Payment request.",
+          "        api_key: API key for authentication.",
+          "",
+          "    Returns:",
+          "        dict: Result with payment_id and status.",
+          "    \"\"\"",
+          "    def _attempt():",
+          "        return create_payment(request, api_key)",
+          "",
+          "    try:",
+          "        response = retry_with_backoff(_attempt)",
+          "        return {\"payment_id\": response.payment_id, \"status\": response.status.value}",
+          "    except Exception as e:",
+          "        return {\"payment_id\": None, \"status\": \"FAILED\", \"error\": str(e)}",
+          "",
+          "",
+          "def process_pending_payments(repo: PaymentRepository | None = None) -> int:",
+          "    \"\"\"Scan and process all pending payments.",
+          "",
+          "    Args:",
+          "        repo: Payment repository (defaults to shared instance).",
+          "",
+          "    Returns:",
+          "        int: Number of payments processed.",
+          "    \"\"\"",
+          "    repository = repo or _repo",
+          "    processed = 0",
+          "    for payment_id, payment in list(repository._payments.items()):",
+          "        if payment.status == PaymentStatus.PENDING:",
+          "            repository.update_payment_status(payment_id, PaymentStatus.PROCESSING)",
+          "            # Simulate processing",
+          "            repository.update_payment_status(payment_id, PaymentStatus.COMPLETED)",
+          "            processed += 1",
+          "    return processed",
+          "",
+          "",
+          "def send_batch_notifications(repo: PaymentRepository | None = None, notifier: NotificationService | None = None) -> int:",
+          "    \"\"\"Send notifications for all completed payments missing notifications.",
+          "",
+          "    Args:",
+          "        repo: Payment repository.",
+          "        notifier: Notification service.",
+          "",
+          "    Returns:",
+          "        int: Number of notifications sent.",
+          "    \"\"\"",
+          "    repository = repo or _repo",
+          "    notification_service = notifier or _notifications",
+          "    sent = 0",
+          "    for payment_id, payment in repository._payments.items():",
+          "        if payment.status == PaymentStatus.COMPLETED:",
+          "            notification_service.send_payment_confirmation(payment, \"batch@example.com\")",
+          "            sent += 1",
+          "    return sent"
+        ],
+        "deleted_lines": [],
+        "context_lines": [
+          "    \"\"\"",
+          "    validator = BasePaymentValidator()",
+          "    return validator.validate(job_payload)"
+        ],
+        "base_change_type": "ADDITION",
+        "semantic_change_type": "SIGNATURE_CHANGE"
+      }
+    ],
+    "changed_symbols": [
+      {
+        "symbol_id": "api.process_payment",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\api.py",
+        "line_start": 27,
+        "line_end": 38,
+        "change_type": "BODY_CHANGE"
+      },
+      {
+        "symbol_id": "api.create_payment",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\api.py",
+        "line_start": 41,
+        "line_end": 99,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "api.get_payment",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\api.py",
+        "line_start": 102,
+        "line_end": 122,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "api.process_refund",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\api.py",
+        "line_start": 125,
+        "line_end": 157,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "api._assess_risk",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\api.py",
+        "line_start": 160,
+        "line_end": 172,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "utils.format_amount",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\utils.py",
+        "line_start": 17,
+        "line_end": 26,
+        "change_type": "BODY_CHANGE"
+      },
+      {
+        "symbol_id": "utils.generate_payment_id",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\utils.py",
+        "line_start": 29,
+        "line_end": 35,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "utils.generate_transaction_id",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\utils.py",
+        "line_start": 38,
+        "line_end": 44,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "utils.compute_audit_hash",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\utils.py",
+        "line_start": 47,
+        "line_end": 59,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "utils.retry_with_backoff",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\utils.py",
+        "line_start": 62,
+        "line_end": 86,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "utils.mask_email",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\utils.py",
+        "line_start": 89,
+        "line_end": 102,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "validator.BasePaymentValidator",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+        "line_start": 11,
+        "line_end": 53,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "validator.BasePaymentValidator.__init__",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+        "line_start": 14,
+        "line_end": 20,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "validator.BasePaymentValidator.validate",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+        "line_start": 22,
+        "line_end": 31,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "validator.BasePaymentValidator.validate_amount",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+        "line_start": 33,
+        "line_end": 42,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "validator.BasePaymentValidator.validate_currency",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+        "line_start": 44,
+        "line_end": 53,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "validator.PaymentRequestValidator",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+        "line_start": 56,
+        "line_end": 80,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "validator.PaymentRequestValidator.validate_request",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+        "line_start": 59,
+        "line_end": 80,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "validator.RefundValidator",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+        "line_start": 83,
+        "line_end": 106,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "validator.RefundValidator.validate_refund",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+        "line_start": 86,
+        "line_end": 106,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "worker.run_worker_job",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+        "line_start": 16,
+        "line_end": 25,
+        "change_type": "BODY_CHANGE"
+      },
+      {
+        "symbol_id": "worker.dry_run_validation",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+        "line_start": 28,
+        "line_end": 38,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "worker.batch_validate_payments",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+        "line_start": 41,
+        "line_end": 65,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "worker.process_payment_with_retry",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+        "line_start": 68,
+        "line_end": 85,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "worker.process_pending_payments",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+        "line_start": 88,
+        "line_end": 105,
+        "change_type": "SIGNATURE_CHANGE"
+      },
+      {
+        "symbol_id": "worker.send_batch_notifications",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+        "line_start": 108,
+        "line_end": 125,
+        "change_type": "SIGNATURE_CHANGE"
+      }
+    ]
+  },
+  "diff_summary": {
+    "files_changed": 5,
+    "hunks": 9,
+    "changed_symbols": 26
+  },
+  "changed_symbols": [
+    {
+      "symbol_id": "api.process_payment",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\api.py",
+      "line_start": 27,
+      "line_end": 38,
+      "change_type": "BODY_CHANGE"
+    },
+    {
+      "symbol_id": "api.create_payment",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\api.py",
+      "line_start": 41,
+      "line_end": 99,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "api.get_payment",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\api.py",
+      "line_start": 102,
+      "line_end": 122,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "api.process_refund",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\api.py",
+      "line_start": 125,
+      "line_end": 157,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "api._assess_risk",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\api.py",
+      "line_start": 160,
+      "line_end": 172,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "utils.format_amount",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\utils.py",
+      "line_start": 17,
+      "line_end": 26,
+      "change_type": "BODY_CHANGE"
+    },
+    {
+      "symbol_id": "utils.generate_payment_id",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\utils.py",
+      "line_start": 29,
+      "line_end": 35,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "utils.generate_transaction_id",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\utils.py",
+      "line_start": 38,
+      "line_end": 44,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "utils.compute_audit_hash",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\utils.py",
+      "line_start": 47,
+      "line_end": 59,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "utils.retry_with_backoff",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\utils.py",
+      "line_start": 62,
+      "line_end": 86,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "utils.mask_email",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\utils.py",
+      "line_start": 89,
+      "line_end": 102,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "validator.BasePaymentValidator",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+      "line_start": 11,
+      "line_end": 53,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "validator.BasePaymentValidator.__init__",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+      "line_start": 14,
+      "line_end": 20,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "validator.BasePaymentValidator.validate",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+      "line_start": 22,
+      "line_end": 31,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "validator.BasePaymentValidator.validate_amount",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+      "line_start": 33,
+      "line_end": 42,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "validator.BasePaymentValidator.validate_currency",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+      "line_start": 44,
+      "line_end": 53,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "validator.PaymentRequestValidator",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+      "line_start": 56,
+      "line_end": 80,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "validator.PaymentRequestValidator.validate_request",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+      "line_start": 59,
+      "line_end": 80,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "validator.RefundValidator",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+      "line_start": 83,
+      "line_end": 106,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "validator.RefundValidator.validate_refund",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\validator.py",
+      "line_start": 86,
+      "line_end": 106,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "worker.run_worker_job",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+      "line_start": 16,
+      "line_end": 25,
+      "change_type": "BODY_CHANGE"
+    },
+    {
+      "symbol_id": "worker.dry_run_validation",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+      "line_start": 28,
+      "line_end": 38,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "worker.batch_validate_payments",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+      "line_start": 41,
+      "line_end": 65,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "worker.process_payment_with_retry",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+      "line_start": 68,
+      "line_end": 85,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "worker.process_pending_payments",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+      "line_start": 88,
+      "line_end": 105,
+      "change_type": "SIGNATURE_CHANGE"
+    },
+    {
+      "symbol_id": "worker.send_batch_notifications",
+      "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\worker.py",
+      "line_start": 108,
+      "line_end": 125,
+      "change_type": "SIGNATURE_CHANGE"
+    }
+  ],
+  "affected_symbols": [
+    {
+      "symbol": {
+        "id": "middleware.RequestLogger.log_request",
+        "name": "log_request",
+        "type": "METHOD",
+        "module": "middleware",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\middleware.py",
+        "line_start": 85,
+        "line_end": 99,
+        "is_public": true,
+        "fan_in": 0,
+        "fan_out": 0,
+        "decorators": [],
+        "signature": "(self, endpoint, merchant_id, customer_email) -> Constant(None)"
+      },
+      "propagation_depth": 1,
+      "risk_score": 0.612,
+      "risk_level": "HIGH",
+      "propagation_path": [
+        "utils.mask_email",
+        "middleware.RequestLogger.log_request"
+      ],
+      "change_type": "DIRECT"
+    },
+    {
+      "symbol": {
+        "id": "notification.NotificationService.send_refund_notification",
+        "name": "send_refund_notification",
+        "type": "METHOD",
+        "module": "notification",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\notification.py",
+        "line_start": 50,
+        "line_end": 71,
+        "is_public": true,
+        "fan_in": 0,
+        "fan_out": 0,
+        "decorators": [],
+        "signature": "(self, payment_id, amount, customer_email) -> bool"
+      },
+      "propagation_depth": 1,
+      "risk_score": 0.612,
+      "risk_level": "HIGH",
+      "propagation_path": [
+        "utils.format_amount",
+        "notification.NotificationService.send_refund_notification"
+      ],
+      "change_type": "DIRECT"
+    },
+    {
+      "symbol": {
+        "id": "repository.PaymentRepository.save_payment",
+        "name": "save_payment",
+        "type": "METHOD",
+        "module": "repository",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\repository.py",
+        "line_start": 49,
+        "line_end": 73,
+        "is_public": true,
+        "fan_in": 0,
+        "fan_out": 0,
+        "decorators": [],
+        "signature": "(self, request, status, risk_flag) -> PaymentResponse"
+      },
+      "propagation_depth": 1,
+      "risk_score": 0.612,
+      "risk_level": "HIGH",
+      "propagation_path": [
+        "utils.format_amount",
+        "repository.PaymentRepository.save_payment"
+      ],
+      "change_type": "DIRECT"
+    },
+    {
+      "symbol": {
+        "id": "repository.PaymentRepository.save_transaction",
+        "name": "save_transaction",
+        "type": "METHOD",
+        "module": "repository",
+        "file_path": "C:\\Users\\LENOVO\\OneDrive\\Dokumen\\buildathon-24hr\\demo\\payments_service\\repository.py",
+        "line_start": 75,
+        "line_end": 97,
+        "is_public": true,
+        "fan_in": 0,
+        "fan_out": 0,
+        "decorators": [],
+        "signature": "(self, payment_id, request) -> TransactionRecord"
+      },
+      "propagation_depth": 1,
+      "risk_score": 0.606,
+      "risk_level": "HIGH",
+      "propagation_path": [
+        "utils.generate_transaction_id",
+        "repository.PaymentRepository.save_transaction"
+      ],
+      "change_type": "DIRECT"
+    }
+  ],
+  "propagation_paths": [
+    {
+      "source_symbol_id": "utils.format_amount",
+      "target_symbol_id": "notification.NotificationService.send_refund_notification",
+      "path": [
+        "utils.format_amount",
+        "notification.NotificationService.send_refund_notification"
+      ]
+    },
+    {
+      "source_symbol_id": "utils.format_amount",
+      "target_symbol_id": "repository.PaymentRepository.save_payment",
+      "path": [
+        "utils.format_amount",
+        "repository.PaymentRepository.save_payment"
+      ]
+    },
+    {
+      "source_symbol_id": "utils.generate_payment_id",
+      "target_symbol_id": "repository.PaymentRepository.save_payment",
+      "path": [
+        "utils.generate_payment_id",
+        "repository.PaymentRepository.save_payment"
+      ]
+    },
+    {
+      "source_symbol_id": "utils.generate_transaction_id",
+      "target_symbol_id": "repository.PaymentRepository.save_transaction",
+      "path": [
+        "utils.generate_transaction_id",
+        "repository.PaymentRepository.save_transaction"
+      ]
+    },
+    {
+      "source_symbol_id": "utils.compute_audit_hash",
+      "target_symbol_id": "repository.PaymentRepository.save_transaction",
+      "path": [
+        "utils.compute_audit_hash",
+        "repository.PaymentRepository.save_transaction"
+      ]
+    },
+    {
+      "source_symbol_id": "utils.mask_email",
+      "target_symbol_id": "middleware.RequestLogger.log_request",
+      "path": [
+        "utils.mask_email",
+        "middleware.RequestLogger.log_request"
+      ]
+    }
+  ],
+  "overall_risk": {
+    "value": 0.612,
+    "level": "HIGH",
+    "confidence": "HIGH",
+    "factors": {
+      "max_affected_risk": 0.612,
+      "import_resolution_rate": 1.0,
+      "ast_parse_success_rate": 1.0,
+      "call_resolution_rate": 0.48214285714285715
+    }
+  },
+  "confidence": "HIGH",
+  "explanation": {
+    "summary": "The changes to several API functions and utility methods introduce a high risk of impact on downstream dependencies, particularly in payment processing and validation. Immediate attention is required to assess the effects on related services.",
+    "blast_radius": "The modifications affect core payment APIs and utility functions, which are critical for transaction handling. Downstream services relying on these APIs may experience failures or unexpected behavior due to the changes.",
+    "impacted_apis": [
+      "api.process_payment",
+      "api.create_payment",
+      "api.get_payment",
+      "api.process_refund",
+      "api._assess_risk"
+    ],
+    "impacted_modules_or_functions": [
+      "api",
+      "utils",
+      "validator",
+      "worker"
+    ],
+    "downstream_dependencies": [
+      "middleware.RequestLogger.log_request",
+      "notification.NotificationService.send_refund_notification",
+      "repository.PaymentRepository.save_payment",
+      "repository.PaymentRepository.save_transaction"
+    ],
+    "high_risk_or_uncertain_areas": [
+      "Changes in API signatures may lead to integration issues with clients relying on the previous versions.",
+      "The impact of changes in validation logic on payment processing is uncertain."
+    ],
+    "known_impact_zones": [
+      "Payment processing workflows that utilize the modified APIs.",
+      "Utilities that format and generate payment-related data."
+    ],
+    "unknown_impact_zones": [
+      "The full extent of impact on external services that consume these APIs is unknown.",
+      "Potential side effects in the worker module due to changes in utility functions."
+    ],
+    "top_risks": [
+      {
+        "symbol": "middleware.RequestLogger.log_request",
+        "reason": "Dependent on utils.mask_email, which has changed."
+      },
+      {
+        "symbol": "notification.NotificationService.send_refund_notification",
+        "reason": "Relies on utils.format_amount, which has changed."
+      },
+      {
+        "symbol": "repository.PaymentRepository.save_payment",
+        "reason": "Affected by changes in utils.format_amount."
+      },
+      {
+        "symbol": "repository.PaymentRepository.save_transaction",
+        "reason": "Dependent on utils.generate_transaction_id, which has changed."
+      }
+    ],
+    "recommended_actions": [
+      "Conduct thorough testing of all impacted APIs and downstream services.",
+      "Review and update client integrations to accommodate signature changes.",
+      "Monitor logs for errors related to the affected symbols post-deployment."
+    ]
+  },
+  "metadata": {
+    "total_files": 10,
+    "parse_success_rate": 1.0,
+    "import_resolution_rate": 1.0,
+    "call_resolution_rate": 0.48214285714285715
+  }
+}

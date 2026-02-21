@@ -1,0 +1,5 @@
+--- a/demo/payments_service/utils.py
++++ b/demo/payments_service/utils.py
+@@ -25,7 +25,7 @@ def format_amount(amount: float) -> str:
+-    return f"${amount:.2f}"
++    return f"${amount:,.2f}"

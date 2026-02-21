@@ -81,3 +81,86 @@ def test_orchestrator_analyze_can_skip_llm() -> None:
     report = analyze(diff, "demo/payments_service", enable_llm=False)
     assert isinstance(report, ImpactReport)
     assert report.explanation is None
+
+
+def test_explainer_falls_back_to_next_model_when_primary_fails(monkeypatch) -> None:
+    """Explainer should retry with fallback model if configured model call fails."""
+    calls: list[str] = []
+
+    class FakeLLMClient:
+        def __init__(self, api_key: str, model: str = "gpt-4o", timeout_seconds: float = 30.0) -> None:
+            self.model = model
+
+        async def call_openai(self, prompt: str) -> str:
+            calls.append(self.model)
+            if self.model == "bad-model":
+                raise RuntimeError("model unavailable")
+            return json.dumps(
+                {
+                    "summary": "Fallback success",
+                    "blast_radius": "Fallback model generated response.",
+                    "top_risks": [{"symbol": "a.b", "reason": "demo"}],
+                    "recommended_actions": ["act1", "act2", "act3"],
+                }
+            )
+
+    monkeypatch.setattr("impact_tracer.core.llm.explainer.LLMClient", FakeLLMClient)
+
+    settings = Settings(openai_api_key="test-key", openai_model="bad-model", demo_mode=0)
+    explainer = LLMExplainer(settings=settings)
+
+    diff = """--- a/demo/payments_service/validator.py
++++ b/demo/payments_service/validator.py
+@@ -6,1 +6,1 @@
+-    def validate(self, payment_data: dict) -> bool:
++    def validate(self, payment_data: dict, strict: bool = False) -> bool:
+"""
+    report = analyze(diff, "demo/payments_service", enable_llm=False)
+    result = explainer.explain(report)
+
+    assert result is not None
+    assert result.summary == "Fallback success"
+    assert calls[0] == "bad-model"
+    assert calls[1] == "gpt-4o-mini"
+
+
+def test_explainer_parses_fenced_json_response(monkeypatch) -> None:
+    """Explainer should parse JSON wrapped in markdown fences."""
+
+    class FakeLLMClient:
+        def __init__(self, api_key: str, model: str = "gpt-4o", timeout_seconds: float = 30.0) -> None:
+            self.model = model
+
+        async def call_openai(self, prompt: str) -> str:
+            return """```json
+{
+  "summary": "Fenced response",
+  "blast_radius": "Model returned fenced JSON and parser recovered.",
+  "impacted_apis": ["api.process_payment"],
+  "impacted_modules_or_functions": ["validator.PaymentRequestValidator.validate"],
+  "downstream_dependencies": ["repository.PaymentRepository.save_payment"],
+  "high_risk_or_uncertain_areas": ["Validator signature drift"],
+  "known_impact_zones": ["payment validation path"],
+  "unknown_impact_zones": ["external callers not in graph"],
+  "top_risks": [{"symbol": "api.process_payment", "reason": "Signature changed"}],
+  "recommended_actions": ["Run integration tests", "Update call sites", "Validate API contracts"]
+}
+```"""
+
+    monkeypatch.setattr("impact_tracer.core.llm.explainer.LLMClient", FakeLLMClient)
+
+    settings = Settings(openai_api_key="test-key", openai_model="gpt-4o-mini", demo_mode=0)
+    explainer = LLMExplainer(settings=settings)
+
+    diff = """--- a/demo/payments_service/validator.py
++++ b/demo/payments_service/validator.py
+@@ -6,1 +6,1 @@
+-    def validate(self, payment_data: dict) -> bool:
++    def validate(self, payment_data: dict, strict: bool = False) -> bool:
+"""
+    report = analyze(diff, "demo/payments_service", enable_llm=False)
+    result = explainer.explain(report)
+
+    assert result is not None
+    assert result.summary == "Fenced response"
+    assert result.impacted_apis == ["api.process_payment"]

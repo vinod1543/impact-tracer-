@@ -1,0 +1,16 @@
+{
+	"$schema": "https://opencode.ai/config.json",
+	"mcp": {
+		"impact_tracer_mcp": {
+			"type": "local",
+			"command": ["./.venv/Scripts/python.exe", "-m", "impact_tracer.mcp.server"],
+			"enabled": true,
+			"timeout": 300000,
+			"envFile": ".env",
+			"environment": {
+				"OPENAI_API_KEY": "{env:OPENAI_API_KEY}",
+				"LOG_LEVEL": "INFO"
+			}
+		}
+	}
+}
