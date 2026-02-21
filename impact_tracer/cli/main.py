@@ -8,7 +8,6 @@ Implements: PRD terminal interface baseline for MVP scaffolding.
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
 from impact_tracer.cli.intent_parser import parse_intent
@@ -58,6 +57,10 @@ def main() -> int:
 
     intent = parse_intent(args.query or "")
     operation = intent.get("operation", "analyze_diff")
+
+    if operation == "analyze_diff" and not diff_text:
+        print("No diff input found. Provide --diff-file <path> or pass unified diff text.")
+        return 2
 
     report = analyze(diff_text, args.project, enable_llm=not args.no_llm)
 

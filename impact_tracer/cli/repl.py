@@ -51,12 +51,46 @@ def run_repl(project_path: str = ".") -> None:
                 console.print(f"Last report id: {session.last_report_id}")
             continue
 
-        report = analyze("", session.current_project or ".")
+        diff_text = _resolve_diff_text(user_input)
+        if not diff_text:
+            console.print("No diff input found. Include unified diff text or a .diff file path.")
+            continue
+
+        report = analyze(diff_text, session.current_project or ".")
         session.last_report_id = f"report-{len(report.changed_symbols)}-{len(report.affected_symbols)}"
         render_cli_report(report, console=console)
 
         if "markdown" in user_input.lower():
-            output_path = write_markdown_report(report, output_path="impact_report.md", interactive_graph_path="graph.html")
+            graph_path = generate_interactive_graph(report, output_path="graph.html")
+            output_path = write_markdown_report(report, output_path="impact_report.md", interactive_graph_path=graph_path)
             console.print(f"Markdown report written to: {output_path}")
 
     return None
+
+
+def _resolve_diff_text(user_input: str) -> str:
+    """Resolve diff text from REPL input.
+
+    Args:
+        user_input: Raw user input.
+
+    Returns:
+        str: Unified diff content if present, otherwise empty string.
+    """
+    stripped = user_input.strip()
+    if stripped.startswith("--- "):
+        return stripped
+
+    if stripped.endswith(".diff"):
+        diff_path = Path(stripped)
+        if diff_path.exists():
+            return diff_path.read_text(encoding="utf-8")
+
+    tokens = stripped.split()
+    for token in tokens:
+        if token.endswith(".diff"):
+            diff_path = Path(token)
+            if diff_path.exists():
+                return diff_path.read_text(encoding="utf-8")
+
+    return ""

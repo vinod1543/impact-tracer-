@@ -35,16 +35,17 @@ def propagate_changes(
 	results: dict[str, AffectedSymbol] = {}
 	paths: list[PropagationPath] = []
 	queue: deque[tuple[str, int, list[str], str]] = deque()
-	visited: set[str] = set()
+	visited: set[tuple[str, str]] = set()
 
 	for root_symbol in changed_symbol_ids:
 		queue.append((root_symbol, 0, [root_symbol], root_symbol))
 
 	while queue:
 		node_id, depth, path, source_symbol_id = queue.popleft()
-		if node_id in visited:
+		state = (source_symbol_id, node_id)
+		if state in visited:
 			continue
-		visited.add(node_id)
+		visited.add(state)
 
 		if max_depth is not None and depth >= max_depth:
 			continue

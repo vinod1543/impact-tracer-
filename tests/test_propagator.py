@@ -68,3 +68,20 @@ def test_propagate_changes_invalid_symbol_id_is_ignored() -> None:
     affected, paths = propagate_changes(graph, ["missing.symbol"], symbol_index)
     assert affected == []
     assert paths == []
+
+
+def test_propagate_changes_handles_multiple_roots_without_cross_root_skip() -> None:
+    """Traversal should keep per-root visited state and include dependents of each root."""
+    graph = nx.DiGraph()
+    graph.add_edge("x.dep", "a.root")
+    graph.add_edge("x.dep", "b.root")
+
+    symbol_index = {
+        "a.root": _symbol("a.root"),
+        "b.root": _symbol("b.root"),
+        "x.dep": _symbol("x.dep"),
+    }
+
+    affected, _ = propagate_changes(graph, ["a.root", "b.root"], symbol_index)
+    affected_ids = {item.symbol.id for item in affected}
+    assert "x.dep" in affected_ids
