@@ -1,6 +1,6 @@
 # EXECUTION_LOG.md
 
-**Last Updated:** 2026-02-21T19:12:12.4708673+05:30  
+**Last Updated:** 2026-02-21T19:16:16.8986610+05:30  
 **Active Phase:** Phase 3 — LLM Integration  
 **Overall Status:** ON_TRACK  
 **Hours Elapsed:** 7 / 24  
@@ -79,6 +79,7 @@
 | Description | Discovered At | Approved | Disposition |
 |---|---|---|---|
 | Generate `requirements.txt` early as Poetry fallback | 2026-02-21T18:43:00+05:30 | Yes | Completed |
+| Create fixed schema baseline doc `SCHEMA.md` for readability and contract stability | 2026-02-21T19:15:00+05:30 | Yes | Completed |
 
 ## Conflict Resolutions
 | Timestamp | Conflict Description | Resolution | Approved By |
@@ -103,3 +104,6 @@
 
 ## Next Planned Step
 - Phase 3, Task 3.1: complete report/LLM models and prompt pipeline.
+
+## Documentation Baseline
+- Added `SCHEMA.md` as the fixed schema reference for implemented Phase 1–2 contracts and Phase 3 bridge.
