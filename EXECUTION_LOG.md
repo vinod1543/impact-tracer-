@@ -1,6 +1,6 @@
 # EXECUTION_LOG.md
 
-**Last Updated:** 2026-02-21T19:35:31.8191535+05:30  
+**Last Updated:** 2026-02-21T19:39:38.9447269+05:30  
 **Active Phase:** Phase 4 — UI & Visualization  
 **Overall Status:** ON_TRACK  
 **Hours Elapsed:** 10 / 24  
@@ -92,6 +92,7 @@
 | 4.8 | Implement dynamic interactive graph export (`output/graph_visualizer.py`, Pyvis) | 2026-02-21T19:32:40+05:30 | Yes |
 | 4.9 | Wire CLI output modes: text/json/markdown + graph generation in markdown mode | 2026-02-21T19:33:40+05:30 | Yes |
 | 4.10 | Add tests for markdown + graph output behavior | 2026-02-21T19:34:30+05:30 | Yes |
+| 4.11 | Fix Windows UTF-8 encoding issue in graph HTML output and inline assets cleanup | 2026-02-21T19:39:00+05:30 | Yes |
 
 ## Blocked Tasks
 | Task ID | Blocker Description | Impact | Escalated | Fallback Active |
@@ -118,6 +119,7 @@
 - Full suite executed: `tests/`
 - Result: `35 passed`, `0 failed`
 - New logic validated (Phase 4 progress): markdown report generation, Mermaid graph section, interactive Pyvis graph HTML export, CLI markdown/json routing
+- Post-fix verification: full suite rerun after graph encoding/asset cleanup remains green (`35 passed`)
 
 ## Compliance Snapshot
 - Plan Compliance Check: Yes

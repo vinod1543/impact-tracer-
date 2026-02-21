@@ -25,7 +25,14 @@ def generate_interactive_graph(report: ImpactReport, output_path: str = "graph.h
 	Returns:
 		str: Generated HTML path.
 	"""
-	net = Network(height="800px", width="100%", directed=True, bgcolor="#111827", font_color="white")
+	net = Network(
+		height="800px",
+		width="100%",
+		directed=True,
+		bgcolor="#111827",
+		font_color="white",
+		cdn_resources="in_line",
+	)
 	net.force_atlas_2based()
 
 	changed_ids = {item.symbol_id for item in report.changed_symbols}
@@ -54,7 +61,8 @@ def generate_interactive_graph(report: ImpactReport, output_path: str = "graph.h
 
 	output = Path(output_path)
 	output.parent.mkdir(parents=True, exist_ok=True)
-	net.save_graph(str(output))
+	html_content = net.generate_html(notebook=False)
+	output.write_text(html_content, encoding="utf-8")
 	return str(output)
 
 
