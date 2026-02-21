@@ -1,14 +1,14 @@
 # EXECUTION_LOG.md
 
-**Last Updated:** 2026-02-21T20:01:54.1932993+05:30  
-**Active Phase:** Phase 5 — Completed  
+**Last Updated:** 2026-02-21T20:07:19.0026670+05:30  
+**Active Phase:** Phase 6 — Demo & Pitch (In Progress)  
 **Overall Status:** ON_TRACK  
-**Hours Elapsed:** 13 / 24  
-**Hours Remaining:** 11
+**Hours Elapsed:** 14 / 24  
+**Hours Remaining:** 10
 
 ## Quick Snapshot
-- Current focus: Phase 5 closeout complete and milestone handoff.
-- Last completed phase: Phase 5 (Testing & Stabilization) — passed.
+- Current focus: Phase 6 final handoff — manual presentation-machine check and submission.
+- Last completed automated checkpoint: Phase 6 tasks 6.1–6.7 completed.
 - Current blocker status: No active blockers (Poetry issue handled by fallback).
 - Latest test health: `52 passed`, `0 failed`.
 
@@ -21,11 +21,13 @@
 | Phase 3 | LLM integration deliverables | PASSED | 2026-02-21T19:24:46+05:30 |
 | Phase 4 | UI & visualization deliverables | PASSED | 2026-02-21T19:44:12+05:30 |
 | Phase 5 | Testing & stabilization deliverables | PASSED | 2026-02-21T20:01:54+05:30 |
+| Phase 6 | Demo & pitch deliverables | IN_PROGRESS | - |
 
 ## In-Progress Tasks
 | Phase | Task ID | Description | Started At | Assignee/Agent |
 |---|---|---|---|---|
-| - | - | No active in-progress tasks | - | - |
+| Phase 6 | 6.8 | Test on presentation computer (manual environment verification) | 2026-02-21T20:07:19+05:30 | User + GitHub Copilot |
+| Phase 6 | 6.9 | Final repository submission confirmation (manual) | 2026-02-21T20:07:19+05:30 | User |
 
 ## Completed Tasks
 
@@ -114,6 +116,17 @@
 | 5.6 | Add stabilization tests for CLI, integration, and edge cases | 2026-02-21T19:59:00+05:30 | Yes |
 | 5.7 | Execute full regression suite and verify green baseline | 2026-02-21T20:01:54+05:30 | Yes |
 
+### Phase 6 — Demo & Pitch (Partially complete)
+| Task ID | Description | Completed At | Validated |
+|---|---|---|---|
+| 6.1 | Create and push `main` release branch from stabilized code; create `v0.1.0` tag | 2026-02-21T20:05:40+05:30 | Yes |
+| 6.2 | Full demo rehearsal #1 — timed dry run (text/markdown/json flows) | 2026-02-21T20:06:20+05:30 | Yes |
+| 6.3 | Identify rough spots and prepare fallback notes | 2026-02-21T20:07:00+05:30 | Yes |
+| 6.4 | Demo rehearsal #2 (scripted scenario replay) | 2026-02-21T20:06:20+05:30 | Yes |
+| 6.5 | Prepare crash-response fallback playbook | 2026-02-21T20:06:50+05:30 | Yes |
+| 6.6 | Create backup demo artifacts (`demo/backup/`) and evidence note | 2026-02-21T20:06:55+05:30 | Yes |
+| 6.7 | Prepare 3-slide problem→solution→demo context | 2026-02-21T20:06:45+05:30 | Yes |
+
 ## Blocked Tasks
 | Task ID | Blocker Description | Impact | Escalated | Fallback Active |
 |---|---|---|---|---|
@@ -131,17 +144,19 @@
 |---|---|---|---|
 | 2026-02-21T18:40:00+05:30 | Plan expects Poetry; environment lacks Poetry | Use documented pip fallback and generate `requirements.txt` | Agent per plan fallback |
 | 2026-02-21T19:29:00+05:30 | User requested markdown-first output replacing JSON, which conflicts with MVP JSON requirement | Keep JSON output and add markdown + interactive graph as enhancement | User confirmed override strategy |
+| 2026-02-21T20:05:00+05:30 | Plan expected merge into `main`, but repo had no `main` branch yet | Created `main` from Phase 5 stabilized branch and pushed; tagged `v0.1.0` successfully | Agent per plan intent |
 
 ## Known Issues
 | ID | Description | Severity | Workaround |
 |---|---|---|---|
 | KI-001 | Poetry not installed in current machine image | Medium | Use `pip` + `requirements.txt` |
+| KI-005 | Presentation-machine rehearsal and final submission are manual steps outside this environment | Low | Execute tasks 6.8 and 6.9 directly before judge session |
 
 ## Test Coverage Summary
 - Full suite executed: `tests/`
 - Result: `52 passed`, `0 failed`
 - New logic validated (Phase 5 complete): multi-root propagation correctness, CLI no-diff fail-fast behavior, REPL diff-file handling, markdown/graph export path, end-to-end demo pipeline, and edge-case project handling
-- Post-fix verification: full suite rerun after stabilization changes remains green (`52 passed`)
+- Phase 6 readiness checks: timed rehearsal runs completed (text 1.68s, markdown 1.56s, json 1.42s), backup artifacts generated, and final regression rerun remains green (`52 passed`)
 
 ## Compliance Snapshot
 - Plan Compliance Check: Yes
@@ -150,7 +165,7 @@
 - Tests Passing: Yes
 
 ## Next Planned Step
-- Await user confirmation for the next phase or release packaging steps.
+- Complete manual tasks 6.8 and 6.9: run rehearsal once on presentation machine and confirm final repository submission.
 
 ## Documentation Baseline
 - Added `SCHEMA.md` as the fixed schema reference for implemented Phase 1–2 contracts and Phase 3 bridge.
