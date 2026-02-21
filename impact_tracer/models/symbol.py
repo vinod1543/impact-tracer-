@@ -18,6 +18,7 @@ class SymbolType(str, Enum):
     FUNCTION = "FUNCTION"
     CLASS = "CLASS"
     METHOD = "METHOD"
+    API_ENDPOINT = "API_ENDPOINT"
     MODULE = "MODULE"
 
 

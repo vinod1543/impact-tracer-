@@ -13,6 +13,9 @@ from impact_tracer.core.graph.graph_store import (
     load_graph_model,
     save_graph_model,
 )
+from impact_tracer.models.graph import EdgeSource
+from impact_tracer.models.infra import InfraEdge, InfraNode, InfraNodeType, InfraTopology
+from impact_tracer.models.runtime import RuntimeEdge, RuntimeNode, RuntimeNodeType, RuntimeTraceGraph
 
 
 def test_graph_builder_creates_module_and_symbol_edges(tmp_path) -> None:
@@ -91,3 +94,51 @@ def test_graph_store_json_round_trip(tmp_path) -> None:
 
     assert len(loaded_graph.nodes) == len(dependency_graph.nodes)
     assert len(loaded_graph.edges) == len(dependency_graph.edges)
+
+
+def test_graph_builder_merges_static_runtime_and_infra_into_unified_graph(tmp_path) -> None:
+    """Builder creates one graph containing static, runtime, and infra layers."""
+    (tmp_path / "app.py").write_text(
+        "def helper():\n"
+        "    return True\n\n"
+        "def process_payment():\n"
+        "    return helper()\n",
+        encoding="utf-8",
+    )
+
+    parser = PythonAstParser()
+    symbol_table = parser.parse_project(str(tmp_path))
+
+    runtime_graph = RuntimeTraceGraph(
+        nodes=[
+            RuntimeNode(id="payments-api", label="payments-api", node_type=RuntimeNodeType.SERVICE),
+            RuntimeNode(id="orders-db", label="orders-db", node_type=RuntimeNodeType.TABLE),
+        ],
+        edges=[
+            RuntimeEdge(source="payments-api", target="orders-db", edge_type="READS", call_count=12, latency_ms=3.7),
+        ],
+    )
+
+    infra_topology = InfraTopology(
+        nodes=[
+            InfraNode(id="k8s-service", label="payments-service", node_type=InfraNodeType.SERVICE, provider="k8s"),
+            InfraNode(id="redis-cache", label="redis-cache", node_type=InfraNodeType.QUEUE, provider="k8s"),
+        ],
+        edges=[InfraEdge(source="k8s-service", target="redis-cache", edge_type="DEPENDS_ON")],
+    )
+
+    unified_graph = build_dependency_graph(
+        symbol_table,
+        build_call_edges(symbol_table),
+        infra_topology=infra_topology,
+        runtime_graph=runtime_graph,
+    )
+
+    node_ids = {node.id for node in unified_graph.nodes}
+    edge_sources = {edge.source_type for edge in unified_graph.edges}
+
+    assert "runtime:payments-api" in node_ids
+    assert "infra:k8s-service" in node_ids
+    assert EdgeSource.AST in edge_sources
+    assert EdgeSource.RUNTIME in edge_sources
+    assert EdgeSource.CONFIG in edge_sources

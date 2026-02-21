@@ -24,6 +24,19 @@ from impact_tracer.models.symbol import (
 class PythonAstParser:
     """Extract symbols and imports from Python files using stdlib AST."""
 
+    API_DECORATOR_NAMES = {
+        "route",
+        "api_route",
+        "get",
+        "post",
+        "put",
+        "patch",
+        "delete",
+        "options",
+        "head",
+        "websocket",
+    }
+
     def parse_project(self, project_path: str) -> SymbolTable:
         """Parse all Python files under a project path.
 
@@ -87,10 +100,11 @@ class PythonAstParser:
         decorators = [self._expr_to_name(dec) for dec in node.decorator_list]
         signature = self._function_signature(node)
         symbol_name = node.name
+        symbol_type = SymbolType.API_ENDPOINT if self._is_api_endpoint(decorators) else SymbolType.FUNCTION
         return Symbol(
             id=f"{module_name}.{symbol_name}",
             name=symbol_name,
-            type=SymbolType.FUNCTION,
+            type=symbol_type,
             module=module_name,
             file_path=str(file_path),
             line_start=node.lineno,
@@ -122,11 +136,12 @@ class PythonAstParser:
             if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 decorators = [self._expr_to_name(dec) for dec in child.decorator_list]
                 signature = self._function_signature(child)
+                symbol_type = SymbolType.API_ENDPOINT if self._is_api_endpoint(decorators) else SymbolType.METHOD
                 method_symbols.append(
                     Symbol(
                         id=f"{module_name}.{node.name}.{child.name}",
                         name=child.name,
-                        type=SymbolType.METHOD,
+                        type=symbol_type,
                         module=module_name,
                         file_path=str(file_path),
                         line_start=child.lineno,
@@ -171,6 +186,8 @@ class PythonAstParser:
             if isinstance(expression.value, ast.Name):
                 return f"{expression.value.id}.{expression.attr}"
             return expression.attr
+        if isinstance(expression, ast.Call):
+            return self._expr_to_name(expression.func)
         return ast.dump(expression, annotate_fields=False)
 
     def _function_signature(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
@@ -189,6 +206,14 @@ class PythonAstParser:
         if isinstance(annotation, ast.Attribute):
             return annotation.attr
         return ast.dump(annotation, annotate_fields=False)
+
+    def _is_api_endpoint(self, decorators: list[str]) -> bool:
+        for decorator in decorators:
+            normalized = decorator.split("(", 1)[0].strip().lower()
+            suffix = normalized.split(".")[-1]
+            if suffix in self.API_DECORATOR_NAMES:
+                return True
+        return False
 
 
 def parse_project(project_path: str) -> SymbolTable:

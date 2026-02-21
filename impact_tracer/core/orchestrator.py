@@ -16,14 +16,22 @@ from impact_tracer.core.risk.config import load_risk_weights
 from impact_tracer.core.risk.scorer import aggregate_overall_risk, score_affected_symbols
 from impact_tracer.models.diff import ChangeType
 from impact_tracer.models.graph import DependencyGraph
+from impact_tracer.models.infra import InfraTopology
 from impact_tracer.models.report import AnalysisMetadata, DiffSummary, ImpactReport
+from impact_tracer.models.runtime import RuntimeTraceGraph
 
 
-def build_graph(project_path: str) -> DependencyGraph:
+def build_graph(
+    project_path: str,
+    infra_topology: InfraTopology | None = None,
+    runtime_graph: RuntimeTraceGraph | None = None,
+) -> DependencyGraph:
     """Build a dependency graph for a project.
 
     Args:
         project_path: Path to target project.
+        infra_topology: Optional parsed infrastructure topology.
+        runtime_graph: Optional parsed runtime topology.
 
     Returns:
         DependencyGraph: Built module and symbol dependency graph.
@@ -31,16 +39,29 @@ def build_graph(project_path: str) -> DependencyGraph:
     parser = PythonAstParser()
     symbol_table = parser.parse_project(project_path)
     call_graph = build_call_edges(symbol_table)
-    return build_dependency_graph(symbol_table, call_graph)
+    return build_dependency_graph(
+        symbol_table,
+        call_graph,
+        infra_topology=infra_topology,
+        runtime_graph=runtime_graph,
+    )
 
 
-def analyze(diff_str: str, project_path: str, enable_llm: bool = True) -> ImpactReport:
+def analyze(
+    diff_str: str,
+    project_path: str,
+    enable_llm: bool = True,
+    infra_topology: InfraTopology | None = None,
+    runtime_graph: RuntimeTraceGraph | None = None,
+) -> ImpactReport:
     """Run end-to-end impact analysis.
 
     Args:
         diff_str: Unified diff string.
         project_path: Project path.
         enable_llm: Whether to run LLM explanation stage.
+        infra_topology: Optional parsed infrastructure topology.
+        runtime_graph: Optional parsed runtime topology.
 
     Returns:
         ImpactReport: Structured impact report.
@@ -48,7 +69,12 @@ def analyze(diff_str: str, project_path: str, enable_llm: bool = True) -> Impact
     parser = PythonAstParser()
     symbol_table = parser.parse_project(project_path)
     call_graph = build_call_edges(symbol_table)
-    dependency_graph = build_dependency_graph(symbol_table, call_graph)
+    dependency_graph = build_dependency_graph(
+        symbol_table,
+        call_graph,
+        infra_topology=infra_topology,
+        runtime_graph=runtime_graph,
+    )
 
     diff_result = parse_unified_diff(diff_str)
     changed_symbols = map_diff_to_symbols(diff_result, symbol_table)

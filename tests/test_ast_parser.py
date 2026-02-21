@@ -105,3 +105,25 @@ def test_parse_project_skips_virtual_environment_paths(tmp_path) -> None:
     parsed_files = {item.file_path for item in result.files}
     assert any(path.endswith("main.py") for path in parsed_files)
     assert all(".venv" not in path for path in parsed_files)
+
+
+def test_parse_file_detects_api_endpoint_symbols_from_route_decorators(tmp_path) -> None:
+    """Parser marks route-decorated functions as API endpoint symbols."""
+    source = """
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/health")
+def health_check() -> dict:
+    return {"ok": True}
+"""
+    project_root = tmp_path
+    target_file = project_root / "api.py"
+    target_file.write_text(source, encoding="utf-8")
+
+    parser = PythonAstParser()
+    file_table = parser.parse_file(target_file, project_root)
+
+    endpoint = next(item for item in file_table.symbols if item.name == "health_check")
+    assert endpoint.type == SymbolType.API_ENDPOINT

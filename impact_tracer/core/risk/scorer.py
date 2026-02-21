@@ -31,6 +31,7 @@ SYMBOL_TYPE_SCORES = {
 	SymbolType.CLASS: 0.7,
 	SymbolType.METHOD: 0.4,
 	SymbolType.FUNCTION: 0.4,
+	SymbolType.API_ENDPOINT: 0.8,
 }
 
 

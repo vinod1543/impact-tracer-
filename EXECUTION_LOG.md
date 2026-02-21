@@ -1,6 +1,6 @@
 # EXECUTION_LOG.md
 
-**Last Updated:** 2026-02-21T20:07:19.0026670+05:30  
+**Last Updated:** 2026-02-21T20:39:33.6829659+05:30  
 **Active Phase:** Phase 6 — Demo & Pitch (In Progress)  
 **Overall Status:** ON_TRACK  
 **Hours Elapsed:** 14 / 24  
@@ -9,6 +9,7 @@
 ## Quick Snapshot
 - Current focus: Phase 6 final handoff — manual presentation-machine check and submission.
 - Last completed automated checkpoint: Phase 6 tasks 6.1–6.7 completed.
+- Post-phase enhancement: unified graph now supports static + runtime + infra merge with API endpoint symbol detection.
 - Current blocker status: No active blockers (Poetry issue handled by fallback).
 - Latest test health: `52 passed`, `0 failed`.
 
@@ -138,6 +139,7 @@
 | Generate `requirements.txt` early as Poetry fallback | 2026-02-21T18:43:00+05:30 | Yes | Completed |
 | Create fixed schema baseline doc `SCHEMA.md` for readability and contract stability | 2026-02-21T19:15:00+05:30 | Yes | Completed |
 | Add detailed markdown output and interactive graph link while retaining JSON mode | 2026-02-21T19:29:00+05:30 | Yes | Completed |
+| Add concrete runtime/infra models, API endpoint symbol type, and unified graph merge support | 2026-02-21T20:39:33+05:30 | Yes | Completed |
 
 ## Conflict Resolutions
 | Timestamp | Conflict Description | Resolution | Approved By |
@@ -154,9 +156,10 @@
 
 ## Test Coverage Summary
 - Full suite executed: `tests/`
-- Result: `52 passed`, `0 failed`
+- Result: `54 passed`, `0 failed`
 - New logic validated (Phase 5 complete): multi-root propagation correctness, CLI no-diff fail-fast behavior, REPL diff-file handling, markdown/graph export path, end-to-end demo pipeline, and edge-case project handling
 - Phase 6 readiness checks: timed rehearsal runs completed (text 1.68s, markdown 1.56s, json 1.42s), backup artifacts generated, and final regression rerun remains green (`52 passed`)
+- Post-phase enhancement validation: unified graph + API endpoint detection updates pass full suite (`54 passed`)
 
 ## Compliance Snapshot
 - Plan Compliance Check: Yes
