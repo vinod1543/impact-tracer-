@@ -1,10 +1,10 @@
 # EXECUTION_LOG.md
 
-**Last Updated:** 2026-02-21T18:49:11.0516228+05:30  
-**Active Phase:** Phase 1 — Core Parsing & Graph  
+**Last Updated:** 2026-02-21T19:00:56.0106082+05:30  
+**Active Phase:** Phase 2 — Impact Engine  
 **Overall Status:** ON_TRACK  
-**Hours Elapsed:** 2 / 24  
-**Hours Remaining:** 22
+**Hours Elapsed:** 4 / 24  
+**Hours Remaining:** 20
 
 ## Completed Tasks
 | Phase | Task ID | Description | Completed At | Validated |
@@ -23,13 +23,19 @@
 | Phase 1 | 1.2 | Implement `models/graph.py` dependency graph schemas | 2026-02-21T18:45:00+05:30 | Yes |
 | Phase 1 | 1.3 | Implement `core/analyzer/python/ast_parser.py` with syntax error tolerance | 2026-02-21T18:45:30+05:30 | Yes |
 | Phase 1 | 1.4 | Implement `core/analyzer/python/import_resolver.py` for absolute/relative imports | 2026-02-21T18:48:30+05:30 | Yes |
+| Phase 1 | 1.5 | Implement `core/analyzer/python/call_graph_builder.py` with unresolved-call accounting | 2026-02-21T18:53:30+05:30 | Yes |
+| Phase 1 | 1.6 | Implement `core/graph/graph_builder.py` for module + symbol graph construction | 2026-02-21T18:57:00+05:30 | Yes |
+| Phase 1 | 1.7 | Implement `core/graph/graph_store.py` JSON round-trip persistence | 2026-02-21T18:57:30+05:30 | Yes |
+| Phase 1 | 1.8 | Implement `core/graph/graph_query.py` query helpers | 2026-02-21T18:57:15+05:30 | Yes |
 | Phase 1 | 1.9 | Add unit tests for AST parser extraction and syntax-error handling | 2026-02-21T18:46:00+05:30 | Yes |
 | Phase 1 | 1.9 | Add unit tests for import resolver alias and relative-depth behavior | 2026-02-21T18:49:00+05:30 | Yes |
+| Phase 1 | 1.10 | Add graph builder/query/store unit tests | 2026-02-21T18:58:30+05:30 | Yes |
+| Phase 1 | 1.11 | Wire `orchestrator.build_graph(project_path)` end-to-end | 2026-02-21T18:57:45+05:30 | Yes |
 
 ## In-Progress Tasks
 | Phase | Task ID | Description | Started At | Assignee/Agent |
 |---|---|---|---|---|
-| Phase 1 | 1.5 | Implement `core/analyzer/python/call_graph_builder.py` | 2026-02-21T18:49:20+05:30 | GitHub Copilot |
+| Phase 2 | 2.1 | Implement `models/diff.py` (`DiffResult`, `Hunk`, `ChangedSymbol`, `ChangeType`) | 2026-02-21T19:01:00+05:30 | GitHub Copilot |
 
 ## Blocked Tasks
 | Task ID | Blocker Description | Impact | Escalated | Fallback Active |
@@ -45,7 +51,8 @@
 | Phase | Validation Checklist | Status | Gate Passed At |
 |---|---|---|---|
 | Phase 0 | Environment and scaffold baseline checks | PASSED_WITH_FALLBACK | 2026-02-21T18:44:00+05:30 |
-| Phase 1 | Core parsing and graph deliverables | IN_PROGRESS | - |
+| Phase 1 | Core parsing and graph deliverables | PASSED | 2026-02-21T19:00:56+05:30 |
+| Phase 2 | Impact engine deliverables | IN_PROGRESS | - |
 
 ## Conflict Resolutions
 | Timestamp | Conflict Description | Resolution | Approved By |
@@ -58,9 +65,12 @@
 | KI-001 | Poetry not installed in current machine image | Medium | Use `pip` + `requirements.txt` fallback |
 
 ## Test Coverage Summary
-- Focused test run executed: `tests/test_ast_parser.py` + `tests/test_import_resolver.py` + `tests/test_smoke.py`
-- Result: `10 passed`, `0 failed`
-- Covered new logic: AST symbol extraction, decorator/signature capture, syntax-error skip behavior, project path skip rules, relative/absolute import mapping
+- Full current suite executed: `tests/`
+- Result: `16 passed`, `0 failed`
+- Covered new logic: AST parsing, import resolution, call graph extraction, graph build/query/store, orchestrator integration
+- Phase 1 checklist spot checks:
+	- Demo graph node count: `14` (target ≥ 10)
+	- Predecessors for `validator.BasePaymentValidator.validate`: `['api.process_payment', 'worker.dry_run_validation']` (target ≥ 2)
 
 ## Compliance Snapshot
 - Plan Compliance Check: Yes
@@ -69,4 +79,4 @@
 - Tests Passing: Yes
 
 ## Next Planned Step
-- Phase 1, Task 1.5: Implement call graph builder and corresponding unit tests.
+- Phase 2, Task 2.1: Implement diff models and unified diff parser.

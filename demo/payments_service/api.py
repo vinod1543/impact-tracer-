@@ -1,6 +1,7 @@
 """API module for demo payments service."""
 
 from demo.payments_service.validator import BasePaymentValidator
+from demo.payments_service.utils import format_amount
 
 
 def process_payment(payload: dict) -> bool:
@@ -12,5 +13,6 @@ def process_payment(payload: dict) -> bool:
     Returns:
         bool: Validation status.
     """
+    _ = format_amount(float(payload.get("amount", 0)))
     validator = BasePaymentValidator()
     return validator.validate(payload)
